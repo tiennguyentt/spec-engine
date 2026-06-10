@@ -95,3 +95,23 @@ class GradeReport(BaseModel):
     blocking_issues: list[str] = Field(
         description="Issues that must be fixed before engineering handoff"
     )
+
+
+# ---- Stage 5: role debate ----------------------------------------------------
+
+class TurnContent(BaseModel):
+    stance: str = Field(description="'challenge', 'defend', or 'concede'")
+    message: str = Field(description="The argument, max ~120 words, concrete and specific")
+    refs: list[str] = Field(description="Requirement/claim/conflict ids this turn is about")
+
+
+class Ruling(BaseModel):
+    requirement_id: str
+    decision: str = Field(description="'accept', 'amend', or 'reject'")
+    rationale: str = Field(description="One sentence grounded in the debate")
+    amendment: str = Field(description="Exact replacement/addition text; empty when decision is 'accept'")
+
+
+class DebateOutcome(BaseModel):
+    rulings: list[Ruling]
+    summary: str = Field(description="2-3 sentence summary of what the debate changed")

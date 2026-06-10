@@ -240,6 +240,87 @@
         "R2 depends on conflict C2 resolution (configurable cancellation window) which awaits CTO confirmation.",
         "Deposit policy conflict C1 (walk-ins/regulars) must be acknowledged by a human before engineering handoff."
       ]
+    },
+    "debate": {
+      "turns": [
+        {
+          "round": 1,
+          "role": "eng",
+          "stance": "challenge",
+          "message": "R1 AC2 releases the slot when the deposit charge fails, but nothing defines how long the slot is held while payment is pending. Without a hold timeout two customers can race for the same slot, or a slot stays locked forever behind an abandoned checkout. Also AC3 enumerates a 'walk-in entry' channel that exists nowhere in the wiki — engineering cannot build against an undefined channel.",
+          "refs": ["R1"]
+        },
+        {
+          "round": 1,
+          "role": "qa",
+          "stance": "challenge",
+          "message": "R4 AC1 demands delivery 'within 1 minute' — an invented SLA with no wiki source and no way to verify against carrier delays. R2 lets a salon configure the cancellation window with no bounds: zero hours? a year? And the 80/20 forfeit split has no rounding rule, so odd deposit amounts are untestable to the cent.",
+          "refs": ["R4", "R2"]
+        },
+        {
+          "round": 1,
+          "role": "po",
+          "stance": "concede",
+          "message": "Three concessions, one defense. R1: drop the channel enumeration from AC3 (keep 'every booking created in the app', per W1) and add a 10-minute payment hold — slot releases automatically if the deposit is not captured. R4: replace the 1-minute SLA with 'triggered immediately on the PayFlow capture webhook', which is observable. R2: bound the window to 0–168 hours, default 24, pending the CTO confirmation already flagged in C2. I defend the 80/20 split as policy (W4); rounding rule goes to QA's next point.",
+          "refs": ["R1", "R4", "R2", "C2"]
+        },
+        {
+          "round": 2,
+          "role": "eng",
+          "stance": "challenge",
+          "message": "Accepting the 10-minute hold. New issue: R2's automatic refunds need idempotency — PayFlow webhooks can retry, and a double-fired refund is real money. The spec must state one refund per booking id, enforced server-side. And R5's session-only cancellation is fine for v1, but say explicitly that step-up verification for high-value refunds is out of scope, or someone will build it ad hoc.",
+          "refs": ["R2", "R5"]
+        },
+        {
+          "round": 2,
+          "role": "qa",
+          "stance": "concede",
+          "message": "The webhook trigger fixes R4 — conceded. Still open from round 1: the forfeit rounding rule on R2. Propose: platform fee rounds down to the smallest currency unit, salon receives the remainder, so the two parts always sum to the deposit exactly. That is a deterministic, testable assertion.",
+          "refs": ["R4", "R2"]
+        },
+        {
+          "round": 2,
+          "role": "po",
+          "stance": "defend",
+          "message": "Agreed on all three: refund idempotency keyed on booking id goes into R2's acceptance criteria; QA's round-down rule for the platform fee is adopted as stated; and step-up verification moves explicitly to out-of-scope with v2 noted. With those amendments I consider the standing challenges closed.",
+          "refs": ["R2", "R5"]
+        }
+      ],
+      "outcome": {
+        "rulings": [
+          {
+            "requirement_id": "R1",
+            "decision": "amend",
+            "rationale": "Eng's race condition is real and the channel enumeration was untraced.",
+            "amendment": "AC3 drops the channel enumeration; new AC: a slot is held for 10 minutes pending deposit capture and is released automatically if payment is not completed."
+          },
+          {
+            "requirement_id": "R2",
+            "decision": "amend",
+            "rationale": "Window bounds, refund idempotency and the rounding rule all emerged unrebutted.",
+            "amendment": "Cancellation window is configurable 0–168 hours (default 24, pending CTO sign-off per C2); exactly one automatic refund per booking id, enforced server-side against webhook retries; forfeit split rounds the platform fee down to the smallest currency unit with the salon receiving the remainder."
+          },
+          {
+            "requirement_id": "R3",
+            "decision": "accept",
+            "rationale": "No party challenged the slot model in either round.",
+            "amendment": ""
+          },
+          {
+            "requirement_id": "R4",
+            "decision": "amend",
+            "rationale": "The 1-minute SLA was invented; the webhook trigger is observable and was accepted by QA.",
+            "amendment": "AC1 reads: confirmation is sent immediately upon receipt of the PayFlow capture webhook, via SMS and push."
+          },
+          {
+            "requirement_id": "R5",
+            "decision": "amend",
+            "rationale": "Session-auth cancellation stands; the boundary had to be made explicit.",
+            "amendment": "Add to out-of-scope: step-up verification for high-value refund cancellations (v2 candidate)."
+          }
+        ],
+        "summary": "The debate closed one race condition, removed two invented or untraced details, and hardened refunds with idempotency and a deterministic rounding rule. Four of five requirements were amended; R3 stands as written. Conflicts C1 and C2 remain flagged for human sign-off."
+      }
     }
   },
   "signoff": { "status": "pending", "by": null }

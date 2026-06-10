@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+from engine.debate import OnTurn, run_debate
 from engine.llm import LLM
 from engine.stages import TRUTH_HIERARCHY, build_wiki, check_conflicts, draft_spec, grade_spec
 
@@ -18,10 +19,11 @@ RUNS_DIR = DATA_DIR / "runs"
 TRANSCRIPTS_DIR = DATA_DIR / "transcripts"
 
 STAGE_TITLES = {
-    "wiki": "1 · Transcript → source-traced wiki",
-    "conflicts": "2 · Truth-hierarchy conflict check",
-    "spec": "3 · Spec draft",
-    "grade": "4 · Automated spec grading",
+    "wiki": "1 · Wiki",
+    "conflicts": "2 · Conflicts",
+    "spec": "3 · Spec",
+    "grade": "4 · Grading",
+    "debate": "5 · Role debate",
 }
 
 ProgressCb = Callable[[str, str], None]  # (stage_name, status: "start" | "done")
@@ -43,7 +45,13 @@ def load_run(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def run_pipeline(llm: LLM, transcripts: dict[str, str], on_progress: ProgressCb | None = None) -> dict:
+def run_pipeline(
+    llm: LLM,
+    transcripts: dict[str, str],
+    on_progress: ProgressCb | None = None,
+    on_turn: OnTurn | None = None,
+    debate_rounds: int = 2,
+) -> dict:
     def progress(stage: str, status: str) -> None:
         if on_progress:
             on_progress(stage, status)
@@ -66,6 +74,10 @@ def run_pipeline(llm: LLM, transcripts: dict[str, str], on_progress: ProgressCb 
     grades = grade_spec(llm, wiki, spec)
     progress("grade", "done")
 
+    progress("debate", "start")
+    debate = run_debate(llm, wiki, spec, grades, rounds=debate_rounds, on_turn=on_turn)
+    progress("debate", "done")
+
     return {
         "meta": {
             "kind": "live",
@@ -84,6 +96,7 @@ def run_pipeline(llm: LLM, transcripts: dict[str, str], on_progress: ProgressCb 
             "conflicts": conflicts.model_dump(),
             "spec": spec.model_dump(),
             "grade": grades.model_dump(),
+            "debate": debate,
         },
         "signoff": {"status": "pending", "by": None},
     }
