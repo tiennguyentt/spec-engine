@@ -94,6 +94,19 @@ Configuration (optional, env vars): `LLM_BASE_URL`, `KNOWLEDGE_ENGINE_MODEL`.
   design language of [tiennguyentt.github.io](https://tiennguyentt.github.io),
   packaged as a drop-in for every app in this series.
 
+## Data & trust
+
+- **All demo data is synthetic.** The AnDigi case, transcripts, policy, code
+  and schema are fictional; no employer or client material is included.
+- **Your API key is never stored.** Live mode uses it for that session's
+  calls only; the app keeps no server-side copy.
+- **The simulator runs no model.** Compiled behavior, acceptance vectors,
+  the gate, drift checks and the Time Machine are pure code.
+- **Honest labels everywhere.** Recorded replays are labeled recorded;
+  scripted content is labeled scripted; nothing pretends to be live inference.
+- **Not legal or compliance advice.** The regulatory content in the demo is
+  illustrative.
+
 ## Roadmap
 
 | # | Milestone | Status |

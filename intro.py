@@ -115,7 +115,7 @@ def render() -> None:
 
     st.write("")
     c1, _ = st.columns([2, 5])
-    if c1.button("▶ See what it caught", type="primary", use_container_width=True):
+    if c1.button("💬 Open the team chat", type="primary", use_container_width=True):
         st.session_state["view"] = "demo"
         st.rerun()
     st.markdown(
