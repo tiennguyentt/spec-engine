@@ -1,0 +1,56 @@
+{
+  "case": "andigi-v1",
+  "description": "Defects deliberately planted in data/andigi/draft-spec.json. Detection recall = how many of these a run actually caught, and through which channel. Lives outside data/andigi so it is never ingested as evidence and never trips the drift snapshot.",
+  "planted_defects": [
+    {
+      "id": "GT1",
+      "title": "Hedge word 'should' in R2's disbursement promise",
+      "expect": { "channel": "gate", "rule_id": "G1", "requirement_id": "R2" }
+    },
+    {
+      "id": "GT2",
+      "title": "Untestable payout timing: 'promptly' / 'quickly' in R2",
+      "expect": { "channel": "gate", "rule_id": "G2", "requirement_id": "R2" }
+    },
+    {
+      "id": "GT3",
+      "title": "R3 traces to zero source claims (invented obligation, no provenance)",
+      "expect": { "channel": "gate", "rule_id": "G7", "requirement_id": "R3" }
+    },
+    {
+      "id": "GT4",
+      "title": "R5 prescribes Redis as an untagged implementation choice",
+      "expect": { "channel": "gate", "rule_id": "G6", "requirement_id": "R5" }
+    },
+    {
+      "id": "GT5",
+      "title": "CEO's no-human auto-approval contradicts published policy 4.1",
+      "expect": { "channel": "conflict", "kind": "business-rule" }
+    },
+    {
+      "id": "GT6",
+      "title": "48h payout promise vs code SLA 120h and DB default 5 days",
+      "expect": { "channel": "conflict", "kind": "artifact-state-gap" }
+    },
+    {
+      "id": "GT7",
+      "title": "'Circular 14/2026' does not exist — invented regulation must be a P0",
+      "expect": { "channel": "finding", "requirement_id": "R3", "priority": "P0" }
+    },
+    {
+      "id": "GT8",
+      "title": "Policy-4.1 contradiction surfaced as a graded finding for a human ruling",
+      "expect": { "channel": "finding", "requirement_id": "R2", "keyword": "4.1" }
+    },
+    {
+      "id": "GT9",
+      "title": "Vague payout wording flagged by the grader as untestable (D5)",
+      "expect": { "channel": "finding", "requirement_id": "R2", "dimension": "D5", "keyword": "promptly" }
+    },
+    {
+      "id": "GT10",
+      "title": "Artifact-state reality (5-day payout) raised against the 48h promise",
+      "expect": { "channel": "finding", "requirement_id": "R2", "keyword": "5-day" }
+    }
+  ]
+}

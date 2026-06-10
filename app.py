@@ -18,7 +18,7 @@ import streamlit as st
 
 import intro
 import theme
-from engine import compiler, drift, handoff, ledger, sponsored, team, timemachine
+from engine import compiler, drift, evals, handoff, ledger, sponsored, team, timemachine
 from engine.llm import DEFAULT_BASE_URL, SUGGESTED_MODELS, LLM
 from engine.pipeline import DATA_DIR, list_runs, load_run, run_pipeline, save_run
 from engine.schemas import DraftSpec
@@ -246,6 +246,32 @@ def render_hero(run: dict) -> None:
             )
 
 
+
+    # ---- eval: detection recall ---------------------------------------------
+    try:
+        ev = evals.score_run(run)
+    except Exception:
+        ev = None
+    if ev:
+        theme.section("the eval", "Detection recall on the planted-defect benchmark",
+                      f'{ev["caught"]}/{ev["total"]} caught · recall {ev["recall"]:.0%}')
+        st.markdown(
+            '<p class="se-body" style="max-width:760px;margin-top:-6px">This case ships with '
+            f'<b>{ev["total"]} deliberately planted defects</b> and a ground-truth file. '
+            "The same scorer runs on scripted and live runs — recall is measured, not claimed.</p>",
+            unsafe_allow_html=True,
+        )
+        with st.expander("per-defect scorecard — what was caught, and through which channel"):
+            rows = "".join(
+                f'<div class="se-gatehit"><span class="{"rid" if d["caught"] else "warn"}" '
+                f'style="color:{"#3FB950" if d["caught"] else "#F85149"}">'
+                f'{"✓" if d["caught"] else "✗ MISSED"}</span> · {esc(d["id"])} [{esc(d["channel"])}] '
+                f'{esc(d["title"])} → <i>{esc(d["where"])}</i></div>'
+                for d in ev["defects"]
+            )
+            st.markdown(rows + '<div class="se-trace" style="margin-top:8px">ground truth: '
+                        "data/evals/andigi-ground-truth.json · scorer: engine/evals.py · pure code, no model</div>",
+                        unsafe_allow_html=True)
 
     # ---- depth ----------------------------------------------------------------
     st.write("")

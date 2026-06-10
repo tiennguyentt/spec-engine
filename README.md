@@ -90,6 +90,10 @@ Configuration (optional, env vars): `LLM_BASE_URL`, `KNOWLEDGE_ENGINE_MODEL`.
   arbiter synthesizes amendments from what survives.
 - **Run logs are plain JSON** (`data/runs/`), so any run can be replayed,
   downloaded, and diffed without the engine installed.
+- **Detection is measured, not claimed.** The benchmark case ships with a
+  ground-truth file of planted defects (`data/evals/`); `engine/evals.py`
+  scores any run — scripted or live — for detection recall per channel
+  (gate, conflict, finding). The scorecard renders in the Report workspace.
 - **The theme is reusable** (`theme.py` + `.streamlit/config.toml`): the
   design language of [tiennguyentt.github.io](https://tiennguyentt.github.io),
   packaged as a drop-in for every app in this series.
