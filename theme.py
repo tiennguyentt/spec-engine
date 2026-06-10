@@ -303,3 +303,43 @@ def bubble(role_key: str, role_label: str, stance: str, message: str, refs: list
 def bar(value: int, max_value: int = 5) -> str:
     pct = max(0, min(100, round(value / max_value * 100)))
     return f'<div class="se-bar"><div style="width:{pct}%"></div></div>'
+
+
+# ---- chat terminal additions (round-7 + chat pivot) -------------------------
+CHAT_CSS = """
+<style>
+.se-rail { display: flex; flex-direction: column; gap: 10px; }
+.se-rail-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.se-rail-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+@keyframes seRolePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(124,140,255,.0); } 50% { box-shadow: 0 0 12px 2px var(--pulse, rgba(124,140,255,.35)); } }
+.se-rail-chip {
+  font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: .04em;
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 10px;
+  color: var(--dim); transition: all .25s ease;
+}
+.se-rail-chip.active { color: var(--ink); border-color: var(--c, var(--accent)); animation: seRolePulse 1.6s ease infinite; }
+.se-rail-chip.done { color: var(--c, var(--add)); border-color: var(--line-strong); }
+@keyframes seTick { 0% { transform: scale(1.12); color: #A3B3FF; } 100% { transform: scale(1); } }
+.se-odo { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); }
+.se-odo b { animation: seTick .16s ease; display: inline-block; }
+.se-runbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  border: 1px solid var(--line); background: rgba(17,21,31,.75); border-radius: 12px;
+  padding: 12px 18px; margin: 6px 0 18px; backdrop-filter: blur(6px);
+}
+.se-runbar .idn { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+.se-runbar .kind { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; border-radius: 999px; padding: 3px 10px; border: 1px solid; }
+.se-chatmsg { margin: 0 0 12px; }
+.se-chatmsg .who { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+.se-human {
+  border: 1px solid rgba(124,140,255,.5); background: rgba(124,140,255,.08);
+  border-radius: 12px 0 12px 12px; padding: 14px 16px; margin: 0 0 12px 18%;
+  color: var(--ink); font-size: 14.5px; line-height: 1.65;
+}
+.se-sysmsg { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--dim); margin: 10px 0; }
+</style>
+"""
+
+
+def inject_chat() -> None:
+    st.markdown(CHAT_CSS, unsafe_allow_html=True)

@@ -19,6 +19,20 @@ from dataclasses import dataclass, field
 from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
+def _load_dotenv() -> None:
+    """Tiny .env loader (no dependency): project-root .env, never overrides."""
+    env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    if not os.path.exists(env_file):
+        return
+    for line in open(env_file, encoding="utf-8"):
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, _, v = line.partition("=")
+            os.environ.setdefault(k.strip(), v.strip())
+
+
+_load_dotenv()
+
 DEFAULT_BASE_URL = os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = os.getenv("KNOWLEDGE_ENGINE_MODEL", "deepseek/deepseek-chat")
 

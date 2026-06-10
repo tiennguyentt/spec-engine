@@ -18,13 +18,14 @@ import streamlit as st
 
 import intro
 import theme
-from engine import handoff, ledger, team, timemachine
+from engine import handoff, ledger, sponsored, team, timemachine
 from engine.llm import DEFAULT_BASE_URL, SUGGESTED_MODELS, LLM
 from engine.pipeline import DATA_DIR, list_runs, load_run, run_pipeline, save_run
 from engine.schemas import DraftSpec
 
 st.set_page_config(page_title="Knowledge Engine", page_icon="📐", layout="wide")
 theme.inject()
+theme.inject_chat()
 
 esc = theme.esc
 
@@ -137,18 +138,7 @@ def render_hero(run: dict) -> None:
         + "</div>",
         unsafe_allow_html=True,
     )
-    n_turns = len(s["debate"]["turns"])
-    pc1, pc2, pc3, _ = st.columns([2.2, 2, 1, 2])
-    if pc1.button(f"▶ Watch the agents work · {n_turns} turns", type="primary", use_container_width=True):
-        st.session_state["playback"] = True
-    if pc2.button("🧪 Test the shipped feature", use_container_width=True):
-        st.session_state["show_feature_top"] = True
-    speed = pc3.selectbox("speed", ["2×", "1×", "4×"], label_visibility="collapsed")
-    st.markdown(f'<p class="se-trace">{esc(run["meta"].get("note", ""))[:110]}</p>', unsafe_allow_html=True)
-    if st.session_state.pop("playback", False):
-        render_playback(run, {"1×": 32, "2×": 64, "4×": 128}[speed])
-    if st.session_state.pop("show_feature_top", False):
-        render_shipped_feature(run)
+
 
     # ---- catch 1: the evidence conflict ------------------------------------
     theme.section("catch 01", "The policy forbids what the spec promises", "truth-hierarchy conflict")
@@ -253,11 +243,7 @@ def render_hero(run: dict) -> None:
                 f'<div class="se-trace">traces → {esc(", ".join(nr["source_claim_ids"]))}</div>'
             )
 
-    # ---- the human: Decision Console ----------------------------------------
-    render_console(run)
 
-    # ---- finale: the spec ships ----------------------------------------------
-    render_shipped_feature(run)
 
     # ---- depth ----------------------------------------------------------------
     st.write("")
@@ -391,6 +377,199 @@ def render_shipped_feature(run: dict) -> None:
         "are the signed corrected spec of this run plus your Decision Console rulings.</p>",
         unsafe_allow_html=True,
     )
+
+
+
+
+# ---------------------------------------------------------------- chat terminal
+ROLE_SHORT = {"po": "PO", "ba": "BA", "ux": "UX", "sa": "SA", "eng": "ENG", "qa": "QA",
+              "devops": "DO", "security": "SEC", "compliance": "CMP", "sm": "SM", "arbiter": "ARB"}
+
+ROLE_KEYWORDS = {
+    "security": ["fraud", "security", "photo", "attack", "leak", "rbac"],
+    "compliance": ["regulation", "circular", "compliance", "legal", "audit", "e-kyc", "ekyc"],
+    "eng": ["code", "sla", "payout", "migration", "idempot", "retry", "database", "schema"],
+    "qa": ["test", "ac", "measur", "verify", "edge"],
+    "devops": ["monitor", "observab", "log", "deploy", "cost"],
+    "ux": ["copy", "screen", "customer", "localiz", "message", "ui"],
+}
+
+
+def _pick_role(question: str) -> str:
+    q = question.lower()
+    for role, kws in ROLE_KEYWORDS.items():
+        if any(k in q for k in kws):
+            return role
+    return "po"
+
+
+def presence_rail_html(active: set, done: set) -> str:
+    chips = ""
+    for key_, short in ROLE_SHORT.items():
+        color = team.role_color(key_)
+        cls = "active" if key_ in active else ("done" if key_ in done else "")
+        chips += (f'<span class="se-rail-chip {cls}" style="--c:{color};--pulse:{color}55">'
+                  f'{esc(short)}</span>')
+    return f'<div class="se-rail-chips">{chips}</div>'
+
+
+def chat_msg_html(role_key: str, message: str, stance: str = "", cursor: bool = False) -> str:
+    label = team.role_label(role_key)
+    color = team.role_color(role_key)
+    cur = " ▌" if cursor else ""
+    stance_html = f' · {esc(stance)}' if stance else ""
+    return (f'<div class="se-chatmsg"><div class="who" style="color:{color}">{esc(label)}{stance_html}</div>'
+            f'<div class="se-turn" style="border-left-color:{color};margin:0">'
+            f'<div class="tmsg" style="margin-top:0">{esc(message)}{cur}</div></div></div>')
+
+
+def render_chat(run: dict) -> None:
+    s = run["stages"]
+    col_chat, col_rail = st.columns([2.6, 1.05], gap="large")
+
+    feed = st.session_state.setdefault("chat_feed", [])
+
+    with col_rail:
+        st.markdown('<div class="se-rail-title">team</div>', unsafe_allow_html=True)
+        rail_ph = st.empty()
+        rail_ph.markdown(presence_rail_html(set(), set(ROLE_SHORT)), unsafe_allow_html=True)
+        st.markdown('<div class="se-rail-title" style="margin-top:14px">execution</div>', unsafe_allow_html=True)
+        usage = run["meta"]["usage"]
+        odo_ph = st.empty()
+        odo_ph.markdown(f'<div class="se-odo">tokens <b>{usage["input_tokens"] + usage["output_tokens"]:,}</b>'
+                        f' · gate <b>{s["gate"]["errors"]}→{s["gate_round2"]["errors"]}</b>'
+                        f' · score <b>{s["grade_round1"]["overall_score"]}→{s["grade_round2"]["overall_score"]}</b></div>',
+                        unsafe_allow_html=True)
+        st.markdown(f'<p class="se-trace" style="margin-top:10px">{esc(run["meta"].get("kind",""))} · '
+                    f'{len(s["debate"]["turns"])} turns · {len(s["debate"]["arbiter"]["amendments"])} amendments</p>',
+                    unsafe_allow_html=True)
+        st.download_button("⬇ eval-log", json.dumps(run, indent=2, ensure_ascii=False), "run.json", use_container_width=True)
+        if sponsored.available():
+            st.markdown(f'<p class="se-trace">sponsored live: {sponsored.remaining_runs()} runs left today</p>', unsafe_allow_html=True)
+
+    with col_chat:
+        if not feed:
+            st.markdown('<p class="se-sysmsg">— recorded sequence loaded · press play to watch the team work, '
+                        'or type your thought below —</p>', unsafe_allow_html=True)
+            b1, b2, _ = st.columns([1.4, 1.2, 2])
+            play = b1.button("▶ Play the run", type="primary", use_container_width=True)
+            instant = b2.button("Show transcript", use_container_width=True)
+            if play or instant:
+                st.session_state["chat_played"] = True
+                _play_into_chat(run, col_chat, rail_ph, animate=play)
+                st.rerun()
+        else:
+            for item in feed:
+                _render_feed_item(item)
+
+    prompt = st.chat_input("Nhập suy nghĩ của bạn vào cuộc debate… (your message carries top authority)")
+    if prompt:
+        _handle_human_message(run, prompt)
+        st.rerun()
+
+
+def _render_feed_item(item: dict) -> None:
+    kind = item["kind"]
+    if kind == "system":
+        st.markdown(f'<p class="se-sysmsg">— {esc(item["text"])} —</p>', unsafe_allow_html=True)
+    elif kind == "router":
+        st.markdown(f'<p class="se-sysmsg">ROUTER → {esc(item["text"])}</p>', unsafe_allow_html=True)
+    elif kind == "turn":
+        st.markdown(chat_msg_html(item["role"], item["message"], item.get("stance", "")), unsafe_allow_html=True)
+    elif kind == "human":
+        st.markdown(f'<div class="se-human"><div class="who" style="color:#A3B3FF;font-family:JetBrains Mono,monospace;'
+                    f'font-size:11px;text-transform:uppercase;letter-spacing:.08em">You · authority: highest</div>'
+                    f'{esc(item["text"])}</div>', unsafe_allow_html=True)
+
+
+def _play_into_chat(run: dict, container, rail_ph, animate: bool) -> None:
+    s = run["stages"]
+    feed = st.session_state["chat_feed"]
+    feed.append({"kind": "system", "text": f'RECORDED REPLAY · {run["meta"].get("kind","run")} · real engine sequence · not live inference'})
+    done: set = set()
+    with container:
+        for phase in s["debate"]["phases"]:
+            feed.append({"kind": "system", "text": phase["title"]})
+            if animate:
+                st.markdown(f'<p class="se-sysmsg">— {esc(phase["title"])} —</p>', unsafe_allow_html=True)
+            for ev in phase["events"]:
+                if ev["type"] == "router" and not ev.get("close_phase"):
+                    feed.append({"kind": "router", "text": ev["focused_question"]})
+                    if animate:
+                        st.markdown(f'<p class="se-sysmsg">ROUTER → {esc(ev["focused_question"])}</p>', unsafe_allow_html=True)
+                        time.sleep(0.6)
+                elif ev["type"] == "turn":
+                    if animate:
+                        rail_ph.markdown(presence_rail_html({ev["role"]}, done), unsafe_allow_html=True)
+                        ph = st.empty()
+                        msg = ev["message"]
+                        step = max(3, len(msg) // 60)
+                        for i in range(0, len(msg), step):
+                            ph.markdown(chat_msg_html(ev["role"], msg[: i + step], ev["stance"], cursor=True), unsafe_allow_html=True)
+                            time.sleep(0.03)
+                        ph.markdown(chat_msg_html(ev["role"], msg, ev["stance"]), unsafe_allow_html=True)
+                    done.add(ev["role"])
+                    feed.append({"kind": "turn", "role": ev["role"], "message": ev["message"], "stance": ev["stance"]})
+        arb = s["debate"]["arbiter"]
+        feed.append({"kind": "turn", "role": "arbiter",
+                     "message": arb["summary"], "stance": "ruling"})
+        if animate:
+            rail_ph.markdown(presence_rail_html({"arbiter"}, done), unsafe_allow_html=True)
+            st.markdown(chat_msg_html("arbiter", arb["summary"], "ruling"), unsafe_allow_html=True)
+        feed.append({"kind": "system", "text": "sequence complete · type below to challenge the team, or open Decide to rule"})
+
+
+def _handle_human_message(run: dict, prompt: str) -> None:
+    feed = st.session_state.setdefault("chat_feed", [])
+    feed.append({"kind": "human", "text": prompt})
+    run["events"].append({"seq": len(run["events"]) + 1, "type": "human_interjection", "text": prompt})
+    api_key_ = sponsored.key()
+    role = _pick_role(prompt)
+    if not api_key_:
+        feed.append({"kind": "system",
+                     "text": f"recorded to the eval-log · {team.role_label(role)} would answer here — "
+                             "no inference key on this deployment (add one in Run live, or sponsored mode)"})
+        return
+    s = run["stages"]
+    from engine.schemas import Turn as TurnSchema
+    llm = LLM(api_key=api_key_, model=sponsored.SPONSORED_MODEL, token_budget=sponsored.PER_RUN_TOKEN_BUDGET)
+    try:
+        turn = llm.complete_json(
+            system=(f"You are the {team.role_label(role)} answering the HUMAN OWNER directly in the team chat. "
+                    "Their word carries the highest authority in the truth hierarchy. Answer their point "
+                    "concretely against the run context, max 90 words, cite requirement/claim ids."),
+            user=(f"RUN CONTEXT (claims + findings, abbreviated):\n"
+                  f"{[c['id'] + ': ' + c['claim'] for c in s['wiki']['claims']]}\n"
+                  f"{[f['id'] + ': ' + f['description'][:80] for f in s['grade_round1']['findings']]}\n\n"
+                  f"HUMAN SAYS: {prompt}"),
+            schema=TurnSchema,
+        )
+        feed.append({"kind": "turn", "role": role, "message": turn.message, "stance": "answers you"})
+        run["events"].append({"seq": len(run["events"]) + 1, "type": "role_answer", "role": role})
+        sponsored.record_run(llm.usage.total)
+    except Exception as err:
+        feed.append({"kind": "system", "text": f"inference failed: {err}"})
+
+
+# ---------------------------------------------------------------- run bar
+WORKSPACES = ["💬 Chat", "📋 Report", "🧪 Test", "✍ Decide"]
+
+
+def render_run_bar(run: dict) -> str:
+    meta = run["meta"]
+    kind = meta.get("kind", "run")
+    kcolor = {"scripted-demo": "#F2A65A", "live": "#3FB950", "real-inference": "#3FB950"}.get(kind, "#9AA3B2")
+    score = run["stages"]["grade_round2"]["overall_score"]
+    st.markdown(
+        f'<div class="se-runbar"><span class="idn"><b style="color:#E7EAF0">AnDigi</b> · claims red-team</span>'
+        f'<span class="kind" style="color:{kcolor};border-color:{kcolor}66">{esc(kind)}</span>'
+        f'<span class="idn">11 agents · 5 phases · {score}/100</span>'
+        f'<span class="idn" style="margin-left:auto">agents do the work · you sign off</span></div>',
+        unsafe_allow_html=True,
+    )
+    ws = st.radio("workspace", WORKSPACES, horizontal=True, label_visibility="collapsed",
+                  key="workspace")
+    return ws
 
 
 # ---------------------------------------------------------------- decision console
@@ -746,6 +925,20 @@ def render_live() -> None:
 if run_live and api_key:
     render_live()
 elif chosen:
-    render_hero(load_run(chosen))
+    _run = st.session_state.get("active_run")
+    if st.session_state.get("active_run_name") != str(chosen):
+        _run = load_run(chosen)
+        st.session_state["active_run"] = _run
+        st.session_state["active_run_name"] = str(chosen)
+        st.session_state["chat_feed"] = []
+    ws = render_run_bar(_run)
+    if ws == "💬 Chat":
+        render_chat(_run)
+    elif ws == "📋 Report":
+        render_hero(_run)
+    elif ws == "🧪 Test":
+        render_shipped_feature(_run)
+    else:
+        render_console(_run)
 else:
     st.error("No recorded runs found in data/runs/ — run scripts/make_demo_run.py first.")
