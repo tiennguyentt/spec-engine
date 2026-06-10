@@ -1,0 +1,246 @@
+{
+  "meta": {
+    "kind": "sample",
+    "note": "Hand-curated sample run so the demo replays without an API key. Switch to 'Run live' to generate a real one with your own model.",
+    "model": "(sample — not a live model output)",
+    "base_url": "-",
+    "duration_seconds": 0,
+    "usage": { "input_tokens": 0, "output_tokens": 0 },
+    "truth_hierarchy": "Truth hierarchy (highest authority first). When sources disagree, the higher\nlevel wins, and the conflict must still be flagged - never silently dropped:\n1. CTO decision           - explicit decisions stated by the CTO\n2. Written policy/contract - signed documents and published policy\n3. Ops lead statement     - operational practice described by the ops lead\n4. Team anecdote          - individual recollections, support stories\n",
+    "transcript_files": ["01-kickoff-cto.md", "02-ops-sync.md"]
+  },
+  "stages": {
+    "wiki": {
+      "project_summary": "FlowBook is a salon booking app. V1 covers booking with deposits, cancellation/refund handling via PayFlow, fixed 15-minute slot granularity with per-service durations, and SMS/push notifications.",
+      "claims": [
+        {
+          "id": "W1",
+          "topic": "Deposits",
+          "claim": "Every booking made through the app takes a 20% deposit at booking time, with no exceptions.",
+          "authority": "CTO decision",
+          "sources": [
+            { "transcript": "01-kickoff-cto.md", "speaker": "Mai (CTO)", "quote": "Every booking takes a 20 percent deposit at the time of booking. No exceptions." }
+          ]
+        },
+        {
+          "id": "W2",
+          "topic": "Deposits",
+          "claim": "Pilot salons in practice skip deposits for walk-ins and trusted regulars.",
+          "authority": "Ops lead statement",
+          "sources": [
+            { "transcript": "02-ops-sync.md", "speaker": "Linh (Ops Lead)", "quote": "our pilot salons skip deposits for walk-ins and for regulars they trust" }
+          ]
+        },
+        {
+          "id": "W3",
+          "topic": "Payments",
+          "claim": "PayFlow is the signed payment provider for v1, supporting card and local wallets, with automatic refunds.",
+          "authority": "CTO decision",
+          "sources": [
+            { "transcript": "01-kickoff-cto.md", "speaker": "Mai (CTO)", "quote": "We already signed with PayFlow for v1. Card and local wallets. Refunds have to be automatic" }
+          ]
+        },
+        {
+          "id": "W4",
+          "topic": "Cancellation",
+          "claim": "Cancellation is free with full deposit refund up to 24 hours before the appointment; inside 24 hours the deposit is forfeit, split 80% salon / 20% platform.",
+          "authority": "CTO decision",
+          "sources": [
+            { "transcript": "01-kickoff-cto.md", "speaker": "Mai (CTO)", "quote": "Free cancellation up to 24 hours before the appointment, full deposit refund." }
+          ]
+        },
+        {
+          "id": "W5",
+          "topic": "Cancellation",
+          "claim": "Most salon owners in practice honor cancellations up to 48 hours before the appointment.",
+          "authority": "Ops lead statement",
+          "sources": [
+            { "transcript": "02-ops-sync.md", "speaker": "Linh (Ops Lead)", "quote": "most owners quietly honor cancellations up to 48 hours before" }
+          ]
+        },
+        {
+          "id": "W6",
+          "topic": "Scheduling",
+          "claim": "Slot granularity is fixed at 15 minutes platform-wide; service durations are set per service by each salon.",
+          "authority": "CTO decision",
+          "sources": [
+            { "transcript": "01-kickoff-cto.md", "speaker": "Mai (CTO)", "quote": "slot granularity is fixed at 15 minutes platform-wide" }
+          ]
+        },
+        {
+          "id": "W7",
+          "topic": "Scheduling",
+          "claim": "Salons want per-staff service durations eventually; per-service durations are acceptable for v1.",
+          "authority": "Ops lead statement",
+          "sources": [
+            { "transcript": "02-ops-sync.md", "speaker": "Linh (Ops Lead)", "quote": "Salons want per-staff durations eventually ... For v1 per-service is fine." }
+          ]
+        },
+        {
+          "id": "W8",
+          "topic": "Notifications",
+          "claim": "V1 sends booking confirmation and a 24-hour reminder via SMS and push; email is optional and must not block v1.",
+          "authority": "CTO decision",
+          "sources": [
+            { "transcript": "01-kickoff-cto.md", "speaker": "Mai (CTO)", "quote": "Booking confirmation and a reminder 24 hours before. SMS plus push." }
+          ]
+        },
+        {
+          "id": "W9",
+          "topic": "Cancellation",
+          "claim": "A customer abroad could not cancel because OTP verification required SMS to her local number.",
+          "authority": "Team anecdote",
+          "sources": [
+            { "transcript": "02-ops-sync.md", "speaker": "Linh (Ops Lead)", "quote": "a lady got the reminder while abroad and couldn't cancel because the app needed an OTP via SMS" }
+          ]
+        }
+      ]
+    },
+    "conflicts": {
+      "conflicts": [
+        {
+          "id": "C1",
+          "claim_ids": ["W1", "W2"],
+          "description": "The CTO mandates a 20% deposit on every app booking with no exceptions, while pilot salons in practice skip deposits for walk-ins and trusted regulars.",
+          "winning_claim_id": "W1",
+          "winning_authority": "CTO decision",
+          "resolution": "Spec enforces deposits on all app bookings per W1. Flag for humans: if owners bypass the app for walk-ins/regulars, booking volume will under-report; consider a salon-side 'deposit waiver' permission as a v2 decision for the CTO.",
+          "needs_human_confirmation": true
+        },
+        {
+          "id": "C2",
+          "claim_ids": ["W4", "W5"],
+          "description": "Official cancellation policy is a 24-hour free-cancellation window, but most owners in practice honor 48 hours.",
+          "winning_claim_id": "W4",
+          "winning_authority": "CTO decision",
+          "resolution": "Spec implements the 24-hour window per W4, but makes the window a per-salon configurable value (default 24h) so current 48h floor practice can be represented without a code change. Confirm the configurable default with the CTO.",
+          "needs_human_confirmation": true
+        }
+      ],
+      "notes": "W6 vs W7 is not a conflict: per-staff durations are an acknowledged v2 wish, and per-service durations are accepted for v1 by both sources. W9 is an edge case input to requirements, not a contradiction."
+    },
+    "spec": {
+      "feature_name": "FlowBook v1 — Booking, deposit and cancellation flow",
+      "summary": "Customers book salon services through FlowBook, pay a 20% deposit via PayFlow at booking time, and can cancel with automatic refunds inside a configurable free-cancellation window (default 24 hours). Slots are 15-minute granularity with per-service durations. Confirmations and reminders go out via SMS and push.",
+      "out_of_scope": [
+        "Per-staff service durations (v2 candidate, per W7)",
+        "Email notifications (optional, must not block v1, per W8)",
+        "Salon-side deposit waivers for walk-ins/regulars (pending CTO decision, see conflict C1)"
+      ],
+      "requirements": [
+        {
+          "id": "R1",
+          "title": "Deposit collection at booking",
+          "statement": "The system collects a deposit equal to 20% of the total service price at booking time through PayFlow, for every booking created in the app.",
+          "acceptance_criteria": [
+            "Given a customer confirms a booking, when payment is initiated, then PayFlow charges exactly 20% of the listed service price as a deposit.",
+            "Given the deposit charge fails, when the customer does not retry successfully, then no booking is created and the slot is released.",
+            "Given any booking channel inside the app (search, rebook, walk-in entry), when a booking is created, then a deposit is always charged."
+          ],
+          "source_claim_ids": ["W1", "W3"]
+        },
+        {
+          "id": "R2",
+          "title": "Cancellation window and automatic refunds",
+          "statement": "The system refunds the full deposit automatically via PayFlow when a booking is cancelled at or before the salon's free-cancellation window, which defaults to 24 hours before the appointment start.",
+          "acceptance_criteria": [
+            "Given a booking is cancelled 24 hours or more before the appointment start, when the cancellation is confirmed, then PayFlow issues a full automatic refund with no manual support step.",
+            "Given a booking is cancelled inside the window, when the cancellation is confirmed, then the deposit is forfeited and split 80% to the salon and 20% to the platform.",
+            "Given a salon admin sets a custom free-cancellation window, when a customer cancels, then the salon's configured window is applied instead of the 24-hour default."
+          ],
+          "source_claim_ids": ["W3", "W4", "W5"]
+        },
+        {
+          "id": "R3",
+          "title": "Slot model",
+          "statement": "The system schedules appointments on a fixed 15-minute slot grid platform-wide, with each salon defining a duration per service.",
+          "acceptance_criteria": [
+            "Given a salon defines a 40-minute service, when a customer books it, then the calendar blocks the next contiguous slots covering 45 minutes (rounded up to slot granularity).",
+            "Given any salon on the platform, when slots are generated, then slot boundaries fall only on 15-minute marks."
+          ],
+          "source_claim_ids": ["W6", "W7"]
+        },
+        {
+          "id": "R4",
+          "title": "Booking notifications",
+          "statement": "The system sends a booking confirmation immediately after deposit capture and a reminder 24 hours before the appointment, each via both SMS and push notification.",
+          "acceptance_criteria": [
+            "Given a deposit is captured, when the booking is created, then the customer receives a confirmation via SMS and push within 1 minute.",
+            "Given an upcoming appointment, when the time reaches 24 hours before start, then the customer receives a reminder via SMS and push.",
+            "Given the customer's device has no push permission, when notifications are sent, then SMS is still delivered independently."
+          ],
+          "source_claim_ids": ["W8"]
+        },
+        {
+          "id": "R5",
+          "title": "Cancellation must not depend on SMS OTP",
+          "statement": "The system allows an authenticated customer to cancel a booking without requiring an SMS OTP to a local phone number.",
+          "acceptance_criteria": [
+            "Given a logged-in customer abroad without access to local SMS, when they cancel a booking, then the cancellation completes using their existing session authentication.",
+            "Given a cancellation request, when additional verification is required, then at least one non-SMS method (e.g. email link or in-app confirmation) is available."
+          ],
+          "source_claim_ids": ["W9"]
+        }
+      ]
+    },
+    "grade": {
+      "grades": [
+        {
+          "requirement_id": "R1",
+          "clarity": 5,
+          "source_coverage": 5,
+          "testability": 4,
+          "issues": [
+            "AC3 references an in-app 'walk-in entry' channel that is not defined anywhere in the wiki; either define the channel list or drop the enumeration."
+          ],
+          "verdict": "ship"
+        },
+        {
+          "requirement_id": "R2",
+          "clarity": 4,
+          "source_coverage": 5,
+          "testability": 5,
+          "issues": [
+            "The per-salon configurable window comes from conflict resolution C2, which still needs CTO confirmation; mark R2 as blocked on that sign-off.",
+            "No upper/lower bound stated for the configurable window (could a salon set 0 hours?)."
+          ],
+          "verdict": "revise"
+        },
+        {
+          "requirement_id": "R3",
+          "clarity": 5,
+          "source_coverage": 5,
+          "testability": 5,
+          "issues": [],
+          "verdict": "ship"
+        },
+        {
+          "requirement_id": "R4",
+          "clarity": 5,
+          "source_coverage": 5,
+          "testability": 4,
+          "issues": [
+            "The 1-minute confirmation delivery target in AC1 is an invented number with no wiki source; confirm or remove."
+          ],
+          "verdict": "ship"
+        },
+        {
+          "requirement_id": "R5",
+          "clarity": 4,
+          "source_coverage": 3,
+          "testability": 4,
+          "issues": [
+            "R5 is derived from a single team anecdote (W9, lowest authority); acceptable as a requirement but the non-SMS verification method list should be a product decision, not inferred."
+          ],
+          "verdict": "revise"
+        }
+      ],
+      "overall_score": 86,
+      "blocking_issues": [
+        "R2 depends on conflict C2 resolution (configurable cancellation window) which awaits CTO confirmation.",
+        "Deposit policy conflict C1 (walk-ins/regulars) must be acknowledged by a human before engineering handoff."
+      ]
+    }
+  },
+  "signoff": { "status": "pending", "by": null }
+}
