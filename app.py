@@ -118,17 +118,13 @@ def render_hero(run: dict) -> None:
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<p class="se-hero-sub"><b style="color:#E7EAF0">What you are looking at:</b> an AI product team '
-        "— 11 role agents plus a deterministic code gate — that red-teams a draft spec against every "
-        "piece of evidence: meeting transcripts, published policy, production code, the database.<br>"
-        '<b style="color:#E7EAF0">The case:</b> AnDigi, a digital insurance app — its claims-filing '
-        "+ AI-triage feature. Below: what the team caught, the corrected diff, and the decisions "
-        "only a human can make.</p>",
+        '<p class="se-hero-sub">An AI team red-teams a draft spec against the evidence. '
+        "Case: <b style=\'color:#E7EAF0\'>AnDigi insurance — claims + AI triage</b>.</p>",
         unsafe_allow_html=True,
     )
     pipe = " ".join(
-        f'<span class="se-id">{p}</span>' + ('<span style="color:#2A3140"> → </span>' if i < 6 else "")
-        for i, p in enumerate(["evidence", "code gate", "grading", "11-role debate", "corrected diff", "human sign-off", "working feature"])
+        f'<span class="se-id">{p}</span>' + ('<span style="color:#2A3140"> → </span>' if i < 4 else "")
+        for i, p in enumerate(["evidence", "gate", "11-agent debate", "corrected spec", "you sign off"])
     )
     st.markdown(f'<div style="font-family:JetBrains Mono,monospace;font-size:11.5px;margin:2px 0 10px;line-height:2">{pipe}</div>', unsafe_allow_html=True)
     st.markdown(
@@ -141,16 +137,18 @@ def render_hero(run: dict) -> None:
         + "</div>",
         unsafe_allow_html=True,
     )
-    if run["meta"].get("note"):
-        st.markdown(f'<p class="se-trace">{esc(run["meta"]["note"])}</p>', unsafe_allow_html=True)
-
     n_turns = len(s["debate"]["turns"])
-    pc1, pc2, _ = st.columns([2, 1, 3])
-    if pc1.button(f"▶ Watch the run · recorded sequence · {n_turns} turns"):
+    pc1, pc2, pc3, _ = st.columns([2.2, 2, 1, 2])
+    if pc1.button(f"▶ Watch the agents work · {n_turns} turns", type="primary", use_container_width=True):
         st.session_state["playback"] = True
-    speed = pc2.selectbox("speed", ["2×", "1×", "4×"], label_visibility="collapsed")
+    if pc2.button("🧪 Test the shipped feature", use_container_width=True):
+        st.session_state["show_feature_top"] = True
+    speed = pc3.selectbox("speed", ["2×", "1×", "4×"], label_visibility="collapsed")
+    st.markdown(f'<p class="se-trace">{esc(run["meta"].get("note", ""))[:110]}</p>', unsafe_allow_html=True)
     if st.session_state.pop("playback", False):
         render_playback(run, {"1×": 32, "2×": 64, "4×": 128}[speed])
+    if st.session_state.pop("show_feature_top", False):
+        render_shipped_feature(run)
 
     # ---- catch 1: the evidence conflict ------------------------------------
     theme.section("catch 01", "The policy forbids what the spec promises", "truth-hierarchy conflict")
@@ -166,8 +164,9 @@ def render_hero(run: dict) -> None:
             inner += f'<div class="se-vs">LOSES — BUT AUDITORS READ THIS ({esc(lose["authority"])})</div>' + source_quote_html(lose["sources"][0])
         summary = (
             f'<div class="chead"><span class="cnum">{esc(c1["id"])}</span>'
-            f'<span class="ctitle">{esc(c1["description"][:150])}…</span></div>'
-            + ('<div class="se-flag">⚑ escalated to the human decision list</div>' if c1["needs_human_confirmation"] else "")
+            f'<span class="ctitle">CEO says auto-approve · policy 4.1 says human review</span>'
+            + ('<span class="se-chip" style="border-color:#F2A65A;color:#F2A65A">⚑ human decision</span>' if c1["needs_human_confirmation"] else "")
+            + "</div>"
         )
         st.markdown(f'<div class="se-catch">{summary}</div>', unsafe_allow_html=True)
         with st.expander("view receipt — both sources, verbatim"):
@@ -181,8 +180,8 @@ def render_hero(run: dict) -> None:
         comp_turn = next((t for t in s["debate"]["turns"] if t["role"] == "compliance"), None)
         st.markdown(
             f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(f1["id"])} · P0</span>'
-            f'<span class="ctitle">{esc(f1["description"][:150])}…</span></div>'
-            f'<div class="se-summon">⚡ grader summoned → {esc(team.role_label("compliance"))}</div></div>',
+            f'<span class="ctitle">“Circular 14/2026” does not exist — the spec invented a regulation</span>'
+            f'<span class="se-summon" style="margin:0">⚡ Compliance summoned</span></div></div>',
             unsafe_allow_html=True,
         )
         with st.expander("view receipt — the corpus says the opposite"):
@@ -203,7 +202,8 @@ def render_hero(run: dict) -> None:
         artifacts = [a for a in artifacts if a and a["claim_class"] == "artifact-state"]
         st.markdown(
             f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(c2["id"])}</span>'
-            f'<span class="ctitle">{esc(c2["description"][:150])}…</span></div></div>',
+            f'<span class="ctitle">Spec promises 48h payout · code pays in 5 days</span>'
+            f'<span class="se-chip">sla.py:5 · DB default 5</span></div></div>',
             unsafe_allow_html=True,
         )
         with st.expander("view receipt — intended vs artifact state"):
@@ -320,12 +320,7 @@ FRAUD_KEYWORDS = ["staged", "fake", "collusion", "pre-arranged", "insurance frau
 def render_shipped_feature(run: dict) -> None:
     theme.section("the spec ships", "Executable acceptance-test slice — pure code, every path cites the baseline",
                   "no model at runtime")
-    st.markdown(
-        '<p class="se-body" style="max-width:70ch">This working FNOL + triage slice is implemented '
-        "directly from the signed corrected spec. Every behavior below is annotated with the "
-        "requirement and claim it executes. Toggle the edges and try to break it.</p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown('<p class="se-trace">built from the signed spec · every verdict cites its requirement · try to break it</p>', unsafe_allow_html=True)
     presets = {
         "Clean claim < 5M": (3_800_000, "rear fender dent from parking incident", True, "active", True),
         "Fraud keyword": (4_200_000, "staged collision with witness statement", True, "active", True),
@@ -428,13 +423,7 @@ def render_console(run: dict) -> None:
 
     theme.section("the human", "Decision Console — your authority, recorded",
                   f"{len(decisions)} rulings + {len(amendments)} reviews · ≈60 seconds")
-    st.markdown(
-        '<p class="se-body" style="max-width:70ch">Rulings have consequences, not comments: '
-        "your choices rewrite the baseline, your edits re-run the code gate, and your "
-        "non-trivial judgments are distilled — with your approval — into permanent rules "
-        "the system enforces on every future run.</p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown('<p class="se-trace">your rulings rewrite the baseline and become permanent rules</p>', unsafe_allow_html=True)
 
     if state == "pending":
         with st.form("console"):
