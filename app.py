@@ -554,7 +554,7 @@ def _linkify(escaped_text: str) -> str:
         tip = _ACTIVE_REFS.get(m.group(1))
         if not tip:
             return m.group(1)
-        return f'<span class="se-ref" title="{esc(tip)}">{m.group(1)}</span>'
+        return f'<span class="se-ref" data-tip="{esc(tip)}">{m.group(1)}</span>'
     return _REF_RX.sub(sub, escaped_text)
 
 

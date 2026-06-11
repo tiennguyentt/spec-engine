@@ -432,12 +432,24 @@ CHAT_CSS = """
 /* replying-to thread line */
 .se-reply { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #7C8CFF; margin: 0 0 4px; }
 
-/* evidence-id chips: hover to read the underlying claim/conflict/finding */
+/* evidence-id chips: instant CSS tooltip with the underlying claim/conflict/finding */
 .se-ref {
-  font-family: 'JetBrains Mono', monospace; font-size: .92em; color: var(--accent);
-  border-bottom: 1px dotted rgba(124,140,255,.6); cursor: help; white-space: nowrap;
+  position: relative; font-family: 'JetBrains Mono', monospace; font-size: .92em;
+  color: var(--accent); border-bottom: 1px dotted rgba(124,140,255,.6);
+  cursor: help; white-space: nowrap;
 }
 .se-ref:hover { background: rgba(124,140,255,.12); border-bottom-style: solid; }
+.se-ref::after {
+  content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 8px);
+  z-index: 999; width: max-content; max-width: 380px; white-space: normal;
+  background: #161B27; border: 1px solid #2A3140; border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.5);
+  padding: 10px 13px; font-family: 'Inter', sans-serif; font-size: 12px;
+  line-height: 1.6; color: #C9D0DC; letter-spacing: 0; text-transform: none;
+  opacity: 0; pointer-events: none; transform: translateY(4px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.se-ref:hover::after { opacity: 1; transform: none; }
 
 /* visible thinking: live stream + collapsed work notes per message */
 .se-think-live { color: #8A94A6; font-style: italic; font-size: 13.5px; }
