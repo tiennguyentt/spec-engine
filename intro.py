@@ -124,3 +124,9 @@ def render() -> None:
         "key and costs pennies on cheap models.</p>",
         unsafe_allow_html=True,
     )
+    st.markdown(
+        '<p class="se-trace">Built by <a href="https://tiennguyentt.github.io/" '
+        'style="color:#7C8CFF" target="_blank">Tiên Nguyễn — tiennguyentt.github.io</a> · '
+        "Not AI-assisted. Agent-operated.</p>",
+        unsafe_allow_html=True,
+    )

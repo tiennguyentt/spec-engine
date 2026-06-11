@@ -3,7 +3,7 @@
 [![ci](https://github.com/tiennguyentt/knowledge-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/tiennguyentt/knowledge-engine/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Not AI-assisted. Agent-operated.**
+**Not AI-assisted. Agent-operated.** · by [Tiên Nguyễn](https://tiennguyentt.github.io/)
 
 An **evidence-backed spec red team** for regulated product work: it audits a
 plausible-looking draft spec against transcripts, policy documents, production
@@ -126,3 +126,9 @@ Configuration (optional, env vars): `LLM_BASE_URL`, `KNOWLEDGE_ENGINE_MODEL`.
 | M1.5 | First fully model-generated run (BYO/sponsored key), capped sponsored live mode | plumbing ready, awaiting key |
 | M2 | Public product: FastAPI + Next.js + SSE broadcast, shareable run URLs, branded PDF exports | committed |
 | M3 | Workflow 02: spec → sprint plan · outcome re-ingestion (decision_events → evidence) | planned |
+
+---
+
+Built and operated by **[Tiên Nguyễn](https://tiennguyentt.github.io/)** —
+AI-native product manager. More agent-operated work at
+[tiennguyentt.github.io](https://tiennguyentt.github.io/).
