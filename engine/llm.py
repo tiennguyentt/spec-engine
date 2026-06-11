@@ -167,6 +167,8 @@ class LLM:
             )
             if response.usage:
                 self.usage.add(Usage(response.usage.prompt_tokens, response.usage.completion_tokens))
+            if not response.choices:  # transient provider hiccup (free tiers) -> JSON retry loop
+                return ""
             return (response.choices[0].message.content or "").strip()
 
         streamer = _FieldStreamer(STREAM_FIELDS, on_text)
