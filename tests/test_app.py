@@ -8,7 +8,7 @@ chat feed from the recorded sequence.
 import pytest
 from streamlit.testing.v1 import AppTest
 
-WORKSPACES = ["💬 Chat", "📋 Report", "🧪 Test", "✍ Decide"]
+WORKSPACES = ["Chat", "Report", "Test", "Decide"]
 
 
 @pytest.fixture()
@@ -38,7 +38,7 @@ def test_every_workspace_renders(at):
 
 
 def test_report_shows_measured_surfaces(at):
-    at.radio[0].set_value("📋 Report")
+    at.radio[0].set_value("Report")
     at.run()
     body = _body(at)
     assert "Detection recall" in body

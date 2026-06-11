@@ -55,7 +55,7 @@ with st.sidebar:
             help="Transcripts/docs (.md .txt), code (.py .txt), schema (.sql) + one draft-spec.json "
                  "(the spec to red-team). Leave empty to run the AnDigi pack.",
         )
-        st.download_button("⬇ draft-spec.json template",
+        st.download_button("draft-spec.json template",
                            (DATA_DIR / "andigi" / "draft-spec.json").read_text(encoding="utf-8"),
                            "draft-spec.json", use_container_width=True)
         run_live = st.button("▶ Run the red team", type="primary", disabled=not api_key, use_container_width=True)
@@ -446,7 +446,7 @@ def render_shipped_feature(run: dict) -> None:
     event = {"seq": len(run["events"]) + 1, "type": "decision_event", "rule": entry.id,
              "verdict": entry.verdict, "table_version": table.version, "claim": claim}
     run["events"].append(event)
-    st.download_button("⬇ Download decision_event (audit trail)", json.dumps(event, indent=2), "decision-event.json")
+    st.download_button("Download decision_event (audit trail)", json.dumps(event, indent=2), "decision-event.json")
     st.markdown('<p class="se-trace">deterministic execution · the decision_event above was appended to this run\'s eval-log (B4 capture)</p>', unsafe_allow_html=True)
 
 
@@ -585,11 +585,11 @@ def render_chat(run: dict) -> None:
         strip_ph = st.empty()
         strip_ph.markdown(_strip_html(set(), set(ROLE_SHORT), _exec_text(run)), unsafe_allow_html=True)
         with st.popover("⋯ run tools"):
-            st.download_button("⬇ eval-log (full run JSON)", json.dumps(run, indent=2, ensure_ascii=False),
+            st.download_button("eval-log (full run JSON)", json.dumps(run, indent=2, ensure_ascii=False),
                                "run.json", use_container_width=True)
             if run["meta"].get("evidence_pack") == "byo":
                 st.caption("drift watch is off for uploaded packs — files live in this session only")
-            elif st.button("🔁 Check evidence drift", use_container_width=True):
+            elif st.button("Check evidence drift", use_container_width=True):
                 for d in drift.check(run):
                     feed.append({"kind": "system", "text": d["text"]})
                     run["events"].append({"seq": len(run["events"]) + 1, "type": "drift_check", **d})
@@ -668,7 +668,7 @@ def _build_feed(run: dict) -> list[dict]:
                        for f in g1["findings"])
     items.append({"kind": "turn", "role": "grader", "stance": "adversarial review · round 1",
                   "message": f'{g1["overall_score"]}/100 — {g1["verdict"].replace("_", " ")}. '
-                             f'{len(g1["findings"])} findings: {ftags}. Full text in 📋 Report; '
+                             f'{len(g1["findings"])} findings: {ftags}. Full text in Report; '
                              "the debate below works through them, role by role."})
 
     for phase in s["debate"]["phases"]:
@@ -700,7 +700,7 @@ def _build_feed(run: dict) -> list[dict]:
                       "message": a_txt + more})
 
     items.append({"kind": "system",
-                  "text": "sequence complete · type below to challenge the team, or open ✍ Decide to rule"})
+                  "text": "sequence complete · type below to challenge the team, or open Decide to rule"})
     return items
 
 
@@ -811,7 +811,7 @@ def _handle_human_message(run: dict, prompt: str) -> None:
 
 
 # ---------------------------------------------------------------- run bar
-WORKSPACES = ["💬 Chat", "📋 Report", "🧪 Test", "✍ Decide"]
+WORKSPACES = ["Chat", "Report", "Test", "Decide"]
 
 
 def render_run_bar(run: dict) -> str:
@@ -820,8 +820,12 @@ def render_run_bar(run: dict) -> str:
     kcolor = {"scripted-demo": "#F2A65A", "live": "#3FB950", "real-inference": "#3FB950"}.get(kind, "#9AA3B2")
     score = run["stages"]["grade_round2"]["overall_score"]
     c_back, c_bar = st.columns([0.6, 11], gap="small")
-    if c_back.button("←", help="Back to what this system solves", use_container_width=True):
-        st.session_state["view"] = "intro"
+    if c_back.button("←", help="Back to the start screen (case brief + play)",
+                     use_container_width=True):
+        # Reset the chat to its first screen so the run can be re-tested.
+        # The intro page stays reachable from the sidebar.
+        st.session_state.pop("chat_feed", None)
+        st.session_state.pop("chat_played", None)
         st.rerun()
     c_bar.markdown(
         f'<div class="se-runbar" style="margin-top:0"><span class="idn"><b style="color:#E7EAF0">AnDigi</b> · '
@@ -974,9 +978,9 @@ def render_baseline(run: dict, signoff: dict) -> None:
         )
 
     c1, c2, c3 = st.columns(3)
-    c1.download_button("⬇ Signed spec (MD)", handoff.signed_spec_md(run, signoff), "signed-spec.md")
-    c2.download_button("⬇ Decision record", handoff.decision_record_md(run, signoff), "decision-record.md")
-    c3.download_button("⬇ Jira/Linear stubs", handoff.ticket_stubs_md(run, signoff), "ticket-stubs.md")
+    c1.download_button("Signed spec (MD)", handoff.signed_spec_md(run, signoff), "signed-spec.md")
+    c2.download_button("Decision record", handoff.decision_record_md(run, signoff), "decision-record.md")
+    c3.download_button("Jira/Linear stubs", handoff.ticket_stubs_md(run, signoff), "ticket-stubs.md")
 
     # ---- the compounding proof: rules fire on the NEXT draft -----------------
     theme.section("the loop", "Your judgment, applied to the next draft", "preflight · pure code")
@@ -1145,7 +1149,7 @@ def render_how(run: dict) -> None:
         unsafe_allow_html=True,
     )
     st.download_button(
-        "⬇ Download the full run (eval-log JSON)",
+        "Download the full run (eval-log JSON)",
         data=json.dumps(run, indent=2, ensure_ascii=False),
         file_name="knowledge-engine-run.json",
         mime="application/json",
@@ -1260,7 +1264,7 @@ def render_live() -> None:
     st.session_state["chat_feed"] = feed
     st.session_state["active_run"] = run
     st.session_state["active_run_name"] = name
-    st.session_state["workspace"] = "💬 Chat"
+    st.session_state["workspace"] = "Chat"
     st.success(f"Run complete — saved as {name}.json. Opening the team chat…")
     st.rerun()
 
@@ -1276,11 +1280,11 @@ elif chosen:
         st.session_state["active_run_name"] = str(chosen)
         st.session_state["chat_feed"] = []
     ws = render_run_bar(_run)
-    if ws == "💬 Chat":
+    if ws == "Chat":
         render_chat(_run)
-    elif ws == "📋 Report":
+    elif ws == "Report":
         render_hero(_run)
-    elif ws == "🧪 Test":
+    elif ws == "Test":
         render_shipped_feature(_run)
     else:
         render_console(_run)
