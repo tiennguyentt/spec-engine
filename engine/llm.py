@@ -37,6 +37,9 @@ DEFAULT_BASE_URL = os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = os.getenv("KNOWLEDGE_ENGINE_MODEL", "deepseek/deepseek-chat")
 
 SUGGESTED_MODELS = [
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free",
     "deepseek/deepseek-chat",
     "google/gemini-2.0-flash-001",
     "qwen/qwen-2.5-72b-instruct",
