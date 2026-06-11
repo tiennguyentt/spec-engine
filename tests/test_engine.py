@@ -99,6 +99,13 @@ def test_evidence_matches_drift_snapshot(run):
     assert [d["kind"] for d in deltas] == ["ok"], deltas
 
 
+def test_evidence_only_pack_loads_without_spec(tmp_path: Path):
+    (tmp_path / "transcript-meeting.md").write_text("# Meeting\nCEO: ship it.\n", encoding="utf-8")
+    sources, spec = load_evidence(tmp_path)
+    assert spec is None  # pipeline will synthesize the draft from the wiki
+    assert "transcript-meeting.md" in sources
+
+
 def test_byo_evidence_dir_loads_and_gates(tmp_path: Path):
     src = DATA_DIR / "andigi" / "draft-spec.json"
     (tmp_path / "draft-spec.json").write_text(src.read_text(encoding="utf-8"), encoding="utf-8")

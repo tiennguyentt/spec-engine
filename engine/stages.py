@@ -56,6 +56,24 @@ def build_wiki(llm: LLM, sources: dict[str, dict]) -> Wiki:
     )
 
 
+def draft_from_wiki(llm: LLM, wiki: Wiki) -> DraftSpec:
+    """No draft spec provided: synthesize one STRICTLY from the wiki, then red-team it."""
+    return llm.complete_json(
+        system=(
+            "You are a senior product analyst. Draft a feature spec strictly "
+            "from the wiki claims provided - nothing else exists. Every "
+            "requirement must list the claim ids it derives from in "
+            "source_claim_ids; if the evidence is silent on something, put it "
+            "in out_of_scope instead of inventing it. Acceptance criteria must "
+            "be testable Given/When/Then with explicit numbers. State exact "
+            "behaviors in active voice; no hedge words (should/may), no vague "
+            "timing (promptly/quickly), no untagged implementation choices."
+        ),
+        user=wiki.model_dump_json(indent=2),
+        schema=DraftSpec,
+    )
+
+
 def check_conflicts(llm: LLM, wiki: Wiki) -> ConflictReport:
     return llm.complete_json(
         system=(

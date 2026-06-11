@@ -53,8 +53,9 @@ with st.sidebar:
         byo_files = st.file_uploader(
             "Your evidence pack (optional)", accept_multiple_files=True,
             type=["md", "txt", "sql", "py", "json"],
-            help="Transcripts/docs (.md .txt), code (.py .txt), schema (.sql) + one draft-spec.json "
-                 "(the spec to red-team). Leave empty to run the AnDigi pack.",
+            help="Transcripts/docs (.md .txt) are enough — code (.py .txt) and schema (.sql) add depth. "
+                 "Optionally include a draft-spec.json to red-team your own spec; without one, the engine "
+                 "drafts a spec from your evidence first. Leave empty to run the AnDigi pack.",
         )
         st.download_button("draft-spec.json template",
                            (DATA_DIR / "andigi" / "draft-spec.json").read_text(encoding="utf-8"),
@@ -1222,25 +1223,27 @@ def render_live() -> None:
     byo = bool(byo_files)
     if byo:
         names = [f.name for f in byo_files]
-        if "draft-spec.json" not in names:
-            st.error("Your pack needs a draft-spec.json (the spec to red-team). "
-                     "Download the template in the sidebar, adapt it, and re-upload.")
-            st.stop()
-        if len(names) < 2:
-            st.error("Upload at least one evidence file (transcript, doc, code or schema) "
-                     "besides draft-spec.json — the red team needs evidence to check against.")
+        has_spec = "draft-spec.json" in names
+        if len(names) - (1 if has_spec else 0) < 1:
+            st.error("Upload at least one evidence file — a transcript, doc, code or schema "
+                     "(.md/.txt is enough).")
             st.stop()
         import tempfile
         evidence_dir = Path(tempfile.mkdtemp(prefix="ke-byo-"))
         for f in byo_files:
             (evidence_dir / Path(f.name).name).write_bytes(f.getvalue())
-        try:
-            DraftSpec.model_validate_json((evidence_dir / "draft-spec.json").read_text(encoding="utf-8"))
-        except Exception as err:
-            st.error(f"draft-spec.json does not match the schema: {err}")
-            st.stop()
-        st.info(f"BYO evidence pack: {len(names) - 1} evidence files + draft spec · "
-                "processed in this session only")
+        if has_spec:
+            try:
+                DraftSpec.model_validate_json((evidence_dir / "draft-spec.json").read_text(encoding="utf-8"))
+            except Exception as err:
+                st.error(f"draft-spec.json does not match the schema: {err}")
+                st.stop()
+            st.info(f"BYO evidence pack: {len(names) - 1} evidence files + your draft spec · "
+                    "processed in this session only")
+        else:
+            st.info(f"BYO evidence pack: {len(names)} evidence files, no draft spec — the engine "
+                    "will draft a spec from your evidence first, then red-team its own draft · "
+                    "processed in this session only")
 
     llm = LLM(api_key=api_key, model=model, base_url=base_url)
 
@@ -1270,7 +1273,7 @@ def render_live() -> None:
 
     _odo()
 
-    titles = {"wiki": "Evidence → wiki", "conflicts": "Conflict check", "gate": "Code gate",
+    titles = {"wiki": "Evidence → wiki", "draft": "Drafting spec from evidence", "conflicts": "Conflict check", "gate": "Code gate",
               "grade": "Grading round 1", "debate": "Role debate", "regrade": "Re-grade", "advisor": "Advisor"}
 
     def on_progress(stage: str, state: str) -> None:

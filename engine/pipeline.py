@@ -18,7 +18,7 @@ from engine.debate import apply_amendments, run_debate
 from engine.gate import run_gate
 from engine.llm import LLM, BudgetExhausted
 from engine.schemas import AmendmentSet, DraftSpec
-from engine.stages import TRUTH_HIERARCHY, advise, build_wiki, check_conflicts, grade_spec
+from engine.stages import TRUTH_HIERARCHY, advise, build_wiki, check_conflicts, draft_from_wiki, grade_spec
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 RUNS_DIR = DATA_DIR / "runs"
@@ -29,8 +29,11 @@ SOURCE_TYPES = {".md": "doc", ".txt": "code", ".sql": "db"}
 ProgressCb = Callable[[str, str], None]  # (stage, "start"|"done")
 
 
-def load_evidence(evidence_dir: Path = EVIDENCE_DIR) -> tuple[dict, DraftSpec]:
-    """Load typed evidence sources + the draft spec (the red-team target)."""
+def load_evidence(evidence_dir: Path = EVIDENCE_DIR) -> tuple[dict, DraftSpec | None]:
+    """Load typed evidence sources + the draft spec (the red-team target).
+
+    The draft spec is optional: with evidence only, the pipeline synthesizes
+    a draft from the wiki and red-teams its own draft."""
     sources: dict[str, dict] = {}
     for p in sorted(evidence_dir.iterdir()):
         if p.name == "draft-spec.json" or p.name.startswith("."):
@@ -39,7 +42,9 @@ def load_evidence(evidence_dir: Path = EVIDENCE_DIR) -> tuple[dict, DraftSpec]:
         if p.suffix == ".py" or p.name.endswith(".py.txt"):
             stype = "code"
         sources[p.name] = {"type": stype, "text": p.read_text(encoding="utf-8")}
-    spec = DraftSpec.model_validate_json((evidence_dir / "draft-spec.json").read_text(encoding="utf-8"))
+    spec_path = evidence_dir / "draft-spec.json"
+    spec = (DraftSpec.model_validate_json(spec_path.read_text(encoding="utf-8"))
+            if spec_path.exists() else None)
     return sources, spec
 
 
@@ -92,7 +97,8 @@ def run_pipeline(
             on_event({"type": "lifecycle", "state": state, "note": note})
 
     sources, draft = load_evidence(evidence_dir)
-    set_state("draft", f"loaded {len(sources)} evidence sources + draft spec")
+    set_state("draft", f"loaded {len(sources)} evidence sources"
+                       + (" + draft spec" if draft else " — no draft spec, will synthesize one"))
     run: dict = {"meta": {}, "stages": {}, "events": [], "lifecycle": lifecycle,
                  "signoff": {"status": "pending", "by": None}}
     partial_reason = ""
@@ -102,6 +108,14 @@ def run_pipeline(
         wiki = build_wiki(llm, sources)
         log.append("stage_done", stage="wiki", claims=len(wiki.claims))
         progress("wiki", "done")
+
+        if draft is None:
+            progress("draft", "start")
+            draft = draft_from_wiki(llm, wiki)
+            log.append("stage_done", stage="draft", requirements=len(draft.requirements))
+            set_state("draft", "synthesized from evidence — every requirement traces to wiki claims")
+            run["meta"]["draft_synthesized"] = True
+            progress("draft", "done")
 
         progress("conflicts", "start")
         conflicts = check_conflicts(llm, wiki)
