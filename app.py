@@ -24,7 +24,7 @@ from engine.llm import DEFAULT_BASE_URL, SUGGESTED_MODELS, LLM
 from engine.pipeline import DATA_DIR, list_runs, load_run, run_pipeline, save_run
 from engine.schemas import DraftSpec
 
-st.set_page_config(page_title="Knowledge Engine", page_icon="📐", layout="wide")
+st.set_page_config(page_title="Knowledge Engine", page_icon="assets/favicon.png", layout="wide")
 theme.inject()
 theme.inject_chat()
 
