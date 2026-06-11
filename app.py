@@ -500,11 +500,30 @@ def _reply_line(run: dict, role: str, refs: list | None) -> str:
     return ""
 
 
+MACHINE_ROLES = {
+    "wiki": ("Evidence Wiki", "#7C8CFF"),
+    "conflicts": ("Conflict Check", "#F2A65A"),
+    "gate": ("Code Gate", "#F85149"),
+    "grader": ("Grader · D1–D5", "#F2A65A"),
+    "advisor": ("Advisor", "#3FB950"),
+}
+
+LEGEND = ("ids — W evidence claim · C conflict · G gate rule · F grader finding · "
+          "R requirement · D1–D5 grading rubric")
+
+
+def _role_label(key: str) -> str:
+    return MACHINE_ROLES[key][0] if key in MACHINE_ROLES else team.role_label(key)
+
+
+def _role_color(key: str) -> str:
+    return MACHINE_ROLES[key][1] if key in MACHINE_ROLES else team.role_color(key)
+
+
 def chat_msg_html(role_key: str, message: str, stance: str = "", cursor: bool = False,
                   reply: str = "", work_notes: dict | None = None, thinking: bool = False) -> str:
-    label = team.role_label(role_key)
-    color = team.role_color(role_key)
-    short = ROLE_SHORT.get(role_key, role_key[:3].upper())
+    label = _role_label(role_key)
+    color = _role_color(role_key)
     cur = " ▌" if cursor else ""
     stance_html = f' · {esc(stance)}' if stance else ""
     reply_html = f'<div class="se-reply">{esc(reply)}</div>' if reply else ""
@@ -522,53 +541,70 @@ def chat_msg_html(role_key: str, message: str, stance: str = "", cursor: bool = 
             rows += f'<br><b>open assumption</b> {esc(wn["open_assumption"])}'
         think = (f'<details class="se-think"><summary>thinking — how {esc(label)} got here</summary>'
                  f'<div class="tbody">{rows}</div></details>')
-    return (f'<div class="se-msg"><div class="se-ava" style="--c:{color}">{esc(short)}</div>'
-            f'<div class="se-msgbody"><div class="who" style="color:{color}">{esc(label)}{stance_html}</div>'
-            f'{reply_html}<div class="{body_cls}">{esc(message)}{cur}</div>{think}</div></div>')
+    return (f'<div class="se-gmsg"><div class="who" style="--c:{color};color:{color}">{esc(label)}'
+            f'<span class="st">{stance_html}</span></div>'
+            f'{reply_html}<div class="{body_cls}">{esc(message)}{cur}</div>{think}</div>')
+
+
+def _exec_text(run: dict, tokens: int | None = None) -> str:
+    s = run["stages"]
+    usage = run["meta"]["usage"]
+    n = (usage["input_tokens"] + usage["output_tokens"]) if tokens is None else tokens
+    return (f'tokens <b>{n:,}</b> · gate <b>{s["gate"]["errors"]}→{s["gate_round2"]["errors"]}</b>'
+            f' · score <b>{s["grade_round1"]["overall_score"]}→{s["grade_round2"]["overall_score"]}</b>')
+
+
+def _strip_html(active: set, done: set, exec_html: str) -> str:
+    chips = ""
+    for key_, short in ROLE_SHORT.items():
+        color = team.role_color(key_)
+        cls = "active" if key_ in active else ("done" if key_ in done else "")
+        chips += (f'<span class="se-rail-chip {cls}" style="--c:{color};--pulse:{color}55">'
+                  f'{esc(short)}</span>')
+    return f'<div class="se-strip">{chips}<span class="exec">{exec_html}</span></div>'
+
+
+CASE_BRIEF = (
+    '<div class="se-casebrief">'
+    '<div class="k">the case · synthetic</div>'
+    '<div class="t"><b>AnDigi</b> is a motorbike-insurance app. The feature being specced: '
+    '<b>file a claim in the app → AI triage → clean claims under 5,000,000 VND auto-approve '
+    'and pay within 48h → fraud or high-value goes to a human adjuster</b>.</div>'
+    '<div class="s">The draft spec of that feature has planted defects. This team red-teams it '
+    'against 6 evidence sources (founder transcript, ops transcript, published policy, code, DB schema) '
+    'and hands you a corrected, dev-ready spec. You hold the final ruling.</div>'
+    "</div>"
+)
 
 
 def render_chat(run: dict) -> None:
-    s = run["stages"]
-    col_chat, col_rail = st.columns([2.6, 1.05], gap="large")
-
     feed = st.session_state.setdefault("chat_feed", [])
+    _, col, _ = st.columns([1, 10, 1], gap="small")
 
-    with col_rail:
-        st.markdown('<div class="se-rail-title">team</div>', unsafe_allow_html=True)
-        rail_ph = st.empty()
-        rail_ph.markdown(presence_rail_html(set(), set(ROLE_SHORT)), unsafe_allow_html=True)
-        st.markdown('<div class="se-rail-title" style="margin-top:14px">execution</div>', unsafe_allow_html=True)
-        usage = run["meta"]["usage"]
-        odo_ph = st.empty()
-        odo_ph.markdown(f'<div class="se-odo">tokens <b>{usage["input_tokens"] + usage["output_tokens"]:,}</b>'
-                        f' · gate <b>{s["gate"]["errors"]}→{s["gate_round2"]["errors"]}</b>'
-                        f' · score <b>{s["grade_round1"]["overall_score"]}→{s["grade_round2"]["overall_score"]}</b></div>',
-                        unsafe_allow_html=True)
-        st.markdown(f'<p class="se-trace" style="margin-top:10px">{esc(run["meta"].get("kind",""))} · '
-                    f'{len(s["debate"]["turns"])} turns · {len(s["debate"]["arbiter"]["amendments"])} amendments</p>',
-                    unsafe_allow_html=True)
-        st.download_button("⬇ eval-log", json.dumps(run, indent=2, ensure_ascii=False), "run.json", use_container_width=True)
-        if run["meta"].get("evidence_pack") == "byo":
-            st.caption("drift watch is off for uploaded packs — files live in this session only")
-        elif st.button("🔁 Check evidence drift", use_container_width=True):
-            feed = st.session_state.setdefault("chat_feed", [])
-            for d in drift.check(run):
-                feed.append({"kind": "system", "text": d["text"]})
-                run["events"].append({"seq": len(run["events"]) + 1, "type": "drift_check", **d})
-            st.rerun()
-        if sponsored.available():
-            st.markdown(f'<p class="se-trace">sponsored live: {sponsored.remaining_runs()} runs left today</p>', unsafe_allow_html=True)
+    with col:
+        strip_ph = st.empty()
+        strip_ph.markdown(_strip_html(set(), set(ROLE_SHORT), _exec_text(run)), unsafe_allow_html=True)
+        with st.popover("⋯ run tools"):
+            st.download_button("⬇ eval-log (full run JSON)", json.dumps(run, indent=2, ensure_ascii=False),
+                               "run.json", use_container_width=True)
+            if run["meta"].get("evidence_pack") == "byo":
+                st.caption("drift watch is off for uploaded packs — files live in this session only")
+            elif st.button("🔁 Check evidence drift", use_container_width=True):
+                for d in drift.check(run):
+                    feed.append({"kind": "system", "text": d["text"]})
+                    run["events"].append({"seq": len(run["events"]) + 1, "type": "drift_check", **d})
+                st.rerun()
+            if sponsored.available():
+                st.caption(f"sponsored live: {sponsored.remaining_runs()} runs left today")
 
-    with col_chat:
         if not feed:
-            st.markdown('<p class="se-sysmsg">— recorded sequence loaded · press play to watch the team work, '
-                        'or type your thought below —</p>', unsafe_allow_html=True)
-            b1, b2, _ = st.columns([1.4, 1.2, 2])
+            st.markdown(CASE_BRIEF, unsafe_allow_html=True)
+            b1, b2, _sp = st.columns([1.6, 1.4, 3])
             play = b1.button("▶ Play the run", type="primary", use_container_width=True)
             instant = b2.button("Show transcript", use_container_width=True)
             if play or instant:
                 st.session_state["chat_played"] = True
-                _play_into_chat(run, col_chat, rail_ph, odo_ph, animate=play)
+                _play_into_chat(run, col, strip_ph, animate=play)
                 st.rerun()
         else:
             for item in feed:
@@ -599,85 +635,145 @@ def _render_feed_item(item: dict) -> None:
                     f'{esc(item["text"])}</div>', unsafe_allow_html=True)
 
 
-def _play_into_chat(run: dict, container, rail_ph, odo_ph, animate: bool) -> None:
+def _build_feed(run: dict) -> list[dict]:
+    """The whole pipeline as one conversation: machinery stages speak, then the team debates."""
     s = run["stages"]
+    kind = run["meta"].get("kind", "run")
+    live = kind in ("live", "real-inference")
+    label = ("LIVE MODEL RUN · real tokens · " + str(run["meta"].get("model", ""))
+             if live else "RECORDED REPLAY · real engine sequence · not live inference")
+    items: list[dict] = [{"kind": "system", "text": label},
+                         {"kind": "system", "text": LEGEND}]
+
+    claims = s["wiki"]["claims"]
+    srcs = {src_["source_file"] for c in claims for src_ in c["sources"]}
+    items.append({"kind": "turn", "role": "wiki", "stance": "stage 1 · evidence",
+                  "message": f"Built {len(claims)} claims (W1–W{len(claims)}) from {len(srcs)} sources — "
+                             "every claim carries a verbatim quote. From here, the team may only argue "
+                             "from these ids; unsourced facts do not exist."})
+    for c in s["conflicts"]["conflicts"]:
+        flag = " ⚑ needs your ruling." if c.get("needs_human_confirmation") else ""
+        items.append({"kind": "turn", "role": "conflicts", "stance": f'{c["id"]} · {c["kind"]}',
+                      "message": f'{c["description"]} Resolution: {c["resolution"]}{flag}'})
+
+    g = s["gate"]
+    warn = sum(1 for h in g["hits"] if h["severity"] == "warning")
+    hits = " · ".join(f'{h["rule_id"]} {h["rule_class"]} ({h["requirement_id"]})' for h in g["hits"])
+    items.append({"kind": "turn", "role": "gate", "stance": "code-enforced",
+                  "message": f'{g["errors"]} errors, {warn} warnings before any model grades: {hits}. '
+                             "Deterministic code — no model can talk its way past it."})
+
+    g1 = s["grade_round1"]
+    ftags = " · ".join(f'{f["id"]} ({f["priority"]}·{f["dimension"]}·{f["requirement_id"]})'
+                       for f in g1["findings"])
+    items.append({"kind": "turn", "role": "grader", "stance": "adversarial review · round 1",
+                  "message": f'{g1["overall_score"]}/100 — {g1["verdict"].replace("_", " ")}. '
+                             f'{len(g1["findings"])} findings: {ftags}. Full text in 📋 Report; '
+                             "the debate below works through them, role by role."})
+
+    for phase in s["debate"]["phases"]:
+        phase_roles = [ev["role"] for ev in phase["events"] if ev["type"] == "turn"]
+        cast = " · ".join(dict.fromkeys(team.role_label(r) for r in phase_roles))
+        items.append({"kind": "phase", "text": phase["title"], "cast": cast, "roles": phase_roles})
+        for ev in phase["events"]:
+            if ev["type"] == "router" and not ev.get("close_phase"):
+                items.append({"kind": "router", "text": ev["focused_question"]})
+            elif ev["type"] == "turn":
+                items.append({"kind": "turn", "role": ev["role"], "message": ev["message"],
+                              "stance": ev["stance"], "work_notes": ev.get("work_notes") or {},
+                              "reply": _reply_line(run, ev["role"], ev.get("refs"))})
+
+    arb = s["debate"]["arbiter"]
+    items.append({"kind": "turn", "role": "arbiter", "message": arb["summary"], "stance": "ruling"})
+
+    g2 = s["grade_round2"]
+    items.append({"kind": "turn", "role": "grader", "stance": "re-grade · round 2",
+                  "message": f'After the amendments: {g1["overall_score"]} → {g2["overall_score"]}/100 — '
+                             f'{g2["verdict"].replace("_", " ")}. '
+                             f'Gate: {g["errors"]} → {s["gate_round2"]["errors"]} errors.'})
+
+    adv = s.get("advisor") or {}
+    if adv.get("items"):
+        a_txt = " ".join(f'[{a["severity"]}] {a["concern"]}' for a in adv["items"][:2])
+        more = f' (+{len(adv["items"]) - 2} more in Report)' if len(adv["items"]) > 2 else ""
+        items.append({"kind": "turn", "role": "advisor", "stance": "advises · never blocks",
+                      "message": a_txt + more})
+
+    items.append({"kind": "system",
+                  "text": "sequence complete · type below to challenge the team, or open ✍ Decide to rule"})
+    return items
+
+
+def _play_into_chat(run: dict, container, strip_ph, animate: bool) -> None:
     feed = st.session_state["chat_feed"]
-    feed.append({"kind": "system", "text": f'RECORDED REPLAY · {run["meta"].get("kind","run")} · real engine sequence · not live inference'})
-    done: set = set()
+    items = _build_feed(run)
 
     usage = run["meta"]["usage"]
     total_tokens = usage["input_tokens"] + usage["output_tokens"]
-    all_msgs = [ev["message"] for ph_ in s["debate"]["phases"] for ev in ph_["events"] if ev["type"] == "turn"]
-    all_msgs.append(s["debate"]["arbiter"]["summary"])
-    total_chars = sum(len(m) for m in all_msgs) or 1
-    odo_tail = (f' · gate <b>{s["gate"]["errors"]}→{s["gate_round2"]["errors"]}</b>'
-                f' · score <b>{s["grade_round1"]["overall_score"]}→{s["grade_round2"]["overall_score"]}</b>')
-    spent_chars = 0
+    total_chars = sum(len(i["message"]) for i in items if i["kind"] == "turn") or 1
+    spent = 0
+    done: set = set()
 
-    def _odo(chars_done: int) -> None:
-        tokens = min(total_tokens, int(total_tokens * chars_done / total_chars))
-        odo_ph.markdown(f'<div class="se-odo">tokens <b>{tokens:,}</b>{odo_tail}</div>', unsafe_allow_html=True)
+    def _paint(active: set, chars: int) -> None:
+        tokens = min(total_tokens, int(total_tokens * chars / total_chars))
+        strip_ph.markdown(_strip_html(active, done, _exec_text(run, tokens)), unsafe_allow_html=True)
 
     if animate:
-        _odo(0)
+        _paint(set(), 0)
     with container:
-        for phase in s["debate"]["phases"]:
-            phase_roles = [ev["role"] for ev in phase["events"] if ev["type"] == "turn"]
-            cast = " · ".join(dict.fromkeys(team.role_label(r) for r in phase_roles))
-            feed.append({"kind": "phase", "text": phase["title"], "cast": cast})
-            if animate:
-                # the room changes: everyone in this phase shows up as present
-                rail_ph.markdown(presence_rail_html(set(phase_roles), done), unsafe_allow_html=True)
-                st.markdown(f'<div class="se-phasehead">{esc(phase["title"])}'
-                            f'<span class="cast">{esc(cast)}</span></div>', unsafe_allow_html=True)
+        for item in items:
+            feed.append(item)
+            if not animate:
+                continue
+            kind = item["kind"]
+            if kind == "system":
+                st.markdown(f'<p class="se-sysmsg">— {esc(item["text"])} —</p>', unsafe_allow_html=True)
+                time.sleep(0.3)
+            elif kind == "phase":
+                _paint(set(item.get("roles", [])), spent)
+                st.markdown(f'<div class="se-phasehead">{esc(item["text"])}'
+                            f'<span class="cast">{esc(item.get("cast", ""))}</span></div>',
+                            unsafe_allow_html=True)
                 time.sleep(0.5)
-            for ev in phase["events"]:
-                if ev["type"] == "router" and not ev.get("close_phase"):
-                    feed.append({"kind": "router", "text": ev["focused_question"]})
-                    if animate:
-                        st.markdown(f'<div class="se-router"><b>router</b> → {esc(ev["focused_question"])}</div>',
-                                    unsafe_allow_html=True)
-                        time.sleep(0.5)
-                elif ev["type"] == "turn":
-                    wn = ev.get("work_notes") or {}
-                    reply = _reply_line(run, ev["role"], ev.get("refs"))
-                    if animate:
-                        rail_ph.markdown(presence_rail_html({ev["role"]}, done), unsafe_allow_html=True)
-                        ph = st.empty()
-                        # 1) visible thinking: the role's real work notes stream first, dim
-                        obs = wn.get("observation", "")
-                        if obs:
-                            tstep = max(4, len(obs) // 24)
-                            for i in range(0, len(obs), tstep):
-                                ph.markdown(chat_msg_html(ev["role"], obs[: i + tstep], "thinking…",
-                                                          cursor=True, thinking=True), unsafe_allow_html=True)
-                                time.sleep(0.022)
-                            time.sleep(0.35)
-                        # 2) the actual position replaces the thinking in place
-                        msg = ev["message"]
-                        step = max(3, len(msg) // 60)
-                        for n, i in enumerate(range(0, len(msg), step)):
-                            ph.markdown(chat_msg_html(ev["role"], msg[: i + step], ev["stance"],
-                                                      cursor=True, reply=reply), unsafe_allow_html=True)
-                            if n % 4 == 0:
-                                _odo(spent_chars + i)
-                            time.sleep(0.03)
-                        ph.markdown(chat_msg_html(ev["role"], msg, ev["stance"], reply=reply,
-                                                  work_notes=wn), unsafe_allow_html=True)
-                    spent_chars += len(ev["message"])
-                    if animate:
-                        _odo(spent_chars)
-                    done.add(ev["role"])
-                    feed.append({"kind": "turn", "role": ev["role"], "message": ev["message"],
-                                 "stance": ev["stance"], "reply": reply, "work_notes": wn})
-        arb = s["debate"]["arbiter"]
-        feed.append({"kind": "turn", "role": "arbiter",
-                     "message": arb["summary"], "stance": "ruling"})
+            elif kind == "router":
+                st.markdown(f'<div class="se-router"><b>router</b> → {esc(item["text"])}</div>',
+                            unsafe_allow_html=True)
+                time.sleep(0.5)
+            elif kind == "turn":
+                role, msg = item["role"], item["message"]
+                wn = item.get("work_notes") or {}
+                reply = item.get("reply", "")
+                if role in MACHINE_ROLES:
+                    # machinery reports snap in — they are stages, not speakers
+                    st.markdown(chat_msg_html(role, msg, item.get("stance", "")), unsafe_allow_html=True)
+                    spent += len(msg)
+                    _paint(set(), spent)
+                    time.sleep(0.7)
+                    continue
+                _paint({role}, spent)
+                ph = st.empty()
+                obs = wn.get("observation", "")
+                if obs:  # visible thinking: the role's real work notes stream first, dim
+                    tstep = max(4, len(obs) // 24)
+                    for i in range(0, len(obs), tstep):
+                        ph.markdown(chat_msg_html(role, obs[: i + tstep], "thinking…",
+                                                  cursor=True, thinking=True), unsafe_allow_html=True)
+                        time.sleep(0.022)
+                    time.sleep(0.35)
+                step = max(3, len(msg) // 60)
+                for n, i in enumerate(range(0, len(msg), step)):
+                    ph.markdown(chat_msg_html(role, msg[: i + step], item.get("stance", ""),
+                                              cursor=True, reply=reply), unsafe_allow_html=True)
+                    if n % 4 == 0:
+                        _paint({role}, spent + i)
+                    time.sleep(0.03)
+                ph.markdown(chat_msg_html(role, msg, item.get("stance", ""), reply=reply,
+                                          work_notes=wn or None), unsafe_allow_html=True)
+                spent += len(msg)
+                done.add(role)
+                _paint(set(), spent)
         if animate:
-            rail_ph.markdown(presence_rail_html({"arbiter"}, done), unsafe_allow_html=True)
-            st.markdown(chat_msg_html("arbiter", arb["summary"], "ruling"), unsafe_allow_html=True)
-            _odo(total_chars)
-        feed.append({"kind": "system", "text": "sequence complete · type below to challenge the team, or open Decide to rule"})
+            _paint(set(), total_chars)
 
 
 def _handle_human_message(run: dict, prompt: str) -> None:
@@ -728,7 +824,8 @@ def render_run_bar(run: dict) -> str:
         st.session_state["view"] = "intro"
         st.rerun()
     c_bar.markdown(
-        f'<div class="se-runbar" style="margin-top:0"><span class="idn"><b style="color:#E7EAF0">AnDigi</b> · claims red-team</span>'
+        f'<div class="se-runbar" style="margin-top:0"><span class="idn"><b style="color:#E7EAF0">AnDigi</b> · '
+        f'feature: in-app claim → AI triage → instant payout</span>'
         f'<span class="kind" style="color:{kcolor};border-color:{kcolor}66">{esc(kind)}</span>'
         f'<span class="idn">11 agents · 5 phases · {score}/100</span>'
         f'<span class="idn" style="margin-left:auto">agents do the work · you sign off</span></div>',
@@ -1156,21 +1253,10 @@ def render_live() -> None:
     import time as _time
     name = f"live-{_time.strftime('%Y%m%d-%H%M%S')}"
     save_run(run, name)
-    # hand the full-roster conversation to the Chat workspace
-    feed = [{"kind": "system", "text": f"LIVE MODEL RUN · {run['meta']['model']} · real tokens · full roster"
-                                       + (" · your evidence pack" if byo else "")}]
-    for phase in run["stages"]["debate"]["phases"]:
-        cast = " · ".join(dict.fromkeys(
-            team.role_label(ev["role"]) for ev in phase["events"] if ev["type"] == "turn"))
-        feed.append({"kind": "phase", "text": phase["title"], "cast": cast})
-        for ev in phase["events"]:
-            if ev["type"] == "router" and not ev.get("close_phase"):
-                feed.append({"kind": "router", "text": ev["focused_question"]})
-            elif ev["type"] == "turn":
-                feed.append({"kind": "turn", "role": ev["role"], "message": ev["message"],
-                             "stance": ev["stance"], "work_notes": ev.get("work_notes") or {},
-                             "reply": _reply_line(run, ev["role"], ev.get("refs"))})
-    feed.append({"kind": "turn", "role": "arbiter", "message": run["stages"]["debate"]["arbiter"]["summary"], "stance": "ruling"})
+    # hand the whole pipeline conversation to the Chat workspace
+    feed = _build_feed(run)
+    if byo:
+        feed.insert(1, {"kind": "system", "text": "your evidence pack · processed in this session only"})
     st.session_state["chat_feed"] = feed
     st.session_state["active_run"] = run
     st.session_state["active_run_name"] = name

@@ -353,25 +353,47 @@ CHAT_CSS = """
 .se-chatmsg { margin: 0 0 12px; }
 .se-chatmsg .who { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
 
-/* Grok-style message row: round role avatar + content column */
-.se-msg { display: flex; gap: 12px; margin: 0 0 18px; max-width: 780px; animation: seUp .35s ease both; }
-.se-ava {
-  width: 30px; height: 30px; flex: 0 0 30px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600;
-  color: var(--c, var(--accent));
-  border: 1px solid color-mix(in srgb, var(--c, #7C8CFF) 55%, transparent);
-  background: color-mix(in srgb, var(--c, #7C8CFF) 12%, transparent);
+/* Grok-style chat: borderless typographic agent blocks in one centered column */
+.se-gmsg { margin: 0 0 28px; animation: seUp .35s ease both; }
+.se-gmsg .who {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--c, var(--accent)); margin-bottom: 7px;
 }
-.se-msgbody { min-width: 0; flex: 1; }
-.se-msg .who { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 3px; }
-.se-msg .tmsg { color: #C3CAD6; font-size: 14.5px; line-height: 1.68; }
-@media (prefers-reduced-motion: reduce) { .se-msg { animation: none; } }
+.se-gmsg .who .st { color: var(--dim); letter-spacing: .06em; }
+.se-gmsg .tmsg { color: #D2D8E2; font-size: 15px; line-height: 1.72; max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { .se-gmsg { animation: none; } }
+
+/* presence strip: one slim row above the feed (chips + execution numbers) */
+.se-strip {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 4px 0 16px; border-bottom: 1px solid var(--line); margin: 0 0 26px;
+}
+.se-strip .exec { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--dim); }
+.se-strip .exec b { color: var(--ink); animation: seTick .16s ease; display: inline-block; }
+
+/* the case brief shown before play — what feature is being red-teamed */
+.se-casebrief {
+  border: 1px solid var(--line); border-radius: 16px; background: rgba(17,21,31,.6);
+  padding: 18px 22px; margin: 8px 0 18px; max-width: 70ch;
+}
+.se-casebrief .k { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.se-casebrief .t { color: #D2D8E2; font-size: 15px; line-height: 1.7; }
+.se-casebrief .s { color: var(--dim); font-size: 13px; line-height: 1.65; margin-top: 8px; }
+/* human message: right-aligned rounded pill, Grok-style */
 .se-human {
-  border: 1px solid rgba(124,140,255,.5); background: rgba(124,140,255,.08);
-  border-radius: 12px 0 12px 12px; padding: 14px 16px; margin: 0 0 12px 18%;
+  width: fit-content; max-width: 72%; margin: 0 0 22px auto;
+  border: 1px solid #2A3242; background: #1B2130;
+  border-radius: 22px; padding: 12px 18px;
   color: var(--ink); font-size: 14.5px; line-height: 1.65;
 }
+
+/* bottom input as a rounded pill */
+[data-testid="stChatInput"] {
+  border: 1px solid var(--line-strong); border-radius: 26px;
+  background: #131826;
+}
+[data-testid="stChatInput"]:focus-within { border-color: var(--accent); }
+[data-testid="stChatInput"] textarea { background: transparent; }
 .se-sysmsg { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--dim); margin: 10px 0; }
 
 /* phase divider: a real room change, not another dim line */
