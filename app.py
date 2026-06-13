@@ -872,7 +872,10 @@ def _handle_human_message(run: dict, prompt: str) -> None:
 
 
 # ---------------------------------------------------------------- run bar
-WORKSPACES = ["Chat", "Report", "Test", "Decide"]
+# Viewer-facing workspaces. Overview (the verdict + receipts) is first, so a
+# cold viewer lands on what the system *found* — not a chat frame. "Debate" is
+# the argument that produced the fixes, reachable on demand, never the front door.
+WORKSPACES = ["Overview", "Debate", "Verify", "Sign-off"]
 
 
 def render_run_bar(run: dict) -> str:
@@ -880,7 +883,7 @@ def render_run_bar(run: dict) -> str:
     kind = meta.get("kind", "run")
     kcolor = {"scripted-demo": "#F2A65A", "live": "#3FB950", "real-inference": "#3FB950"}.get(kind, "#9AA3B2")
     score = run["stages"]["grade_round2"]["overall_score"]
-    c_back, c_bar = st.columns([0.6, 11], gap="small")
+    c_back, c_bar, c_dl = st.columns([0.6, 9.6, 1.8], gap="small")
     if c_back.button("←", help="Back to the start screen (case brief + play)",
                      use_container_width=True):
         # Reset the chat to its first screen so the run can be re-tested.
@@ -895,6 +898,13 @@ def render_run_bar(run: dict) -> str:
         f'<span class="idn">11 agents · 5 phases · {score}/100</span>'
         f'<span class="idn" style="margin-left:auto">agents do the work · you sign off</span></div>',
         unsafe_allow_html=True,
+    )
+    c_dl.download_button(
+        "⬇ replay", data=json.dumps(run, indent=2, ensure_ascii=False),
+        file_name=f"knowledge-engine-{kind}.json", mime="application/json",
+        use_container_width=True,
+        help="Download this run as a self-contained JSON bundle — replayable and "
+             "diffable anywhere, no engine install needed.",
     )
     ws = st.radio("workspace", WORKSPACES, horizontal=True, label_visibility="collapsed",
                   key="workspace")
@@ -1327,8 +1337,8 @@ def render_live() -> None:
     st.session_state["chat_feed"] = feed
     st.session_state["active_run"] = run
     st.session_state["active_run_name"] = name
-    st.session_state["workspace"] = "Chat"
-    st.success(f"Run complete — saved as {name}.json. Opening the team chat…")
+    st.session_state["workspace"] = "Overview"
+    st.success(f"Run complete — saved as {name}.json. Showing the verdict + catches…")
     st.rerun()
 
 
@@ -1343,11 +1353,11 @@ elif chosen:
         st.session_state["active_run_name"] = str(chosen)
         st.session_state["chat_feed"] = []
     ws = render_run_bar(_run)
-    if ws == "Chat":
-        render_chat(_run)
-    elif ws == "Report":
+    if ws == "Overview":
         render_hero(_run)
-    elif ws == "Test":
+    elif ws == "Debate":
+        render_chat(_run)
+    elif ws == "Verify":
         render_shipped_feature(_run)
     else:
         render_console(_run)

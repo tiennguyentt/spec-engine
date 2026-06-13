@@ -4,9 +4,28 @@ Rendered as the default view. Pure presentation — all copy lives here so the
 demo code stays clean.
 """
 
+import json
+from pathlib import Path
+
 import streamlit as st
 
 import theme
+
+
+def _teaser_stats() -> tuple | None:
+    """Headline numbers from the shipped demo run, so the payoff is legible
+    before the viewer clicks. Returns None if the run isn't present."""
+    try:
+        p = Path(__file__).parent / "data" / "runs" / "demo-andigi.json"
+        r = json.loads(p.read_text(encoding="utf-8"))
+        s = r["stages"]
+        g1, g2 = s["grade_round1"]["overall_score"], s["grade_round2"]["overall_score"]
+        arb = s["debate"]["arbiter"]
+        return (g1, g2, g2 - g1, len(arb["amendments"]),
+                s["gate"]["errors"], len(arb["unresolved_human_decisions"]))
+    except Exception:
+        return None
+
 
 PROBLEMS = [
     {
@@ -89,6 +108,27 @@ def render() -> None:
         unsafe_allow_html=True,
     )
 
+    ts = _teaser_stats()
+    if ts:
+        g1, g2, delta, defects, gate_err, humans = ts
+        st.markdown(
+            '<div class="se-card" style="display:flex;flex-wrap:wrap;gap:26px;'
+            'align-items:baseline;font-family:JetBrains Mono,monospace;margin-top:10px">'
+            '<span style="font-size:21px;color:#E7EAF0">'
+            f'<span style="color:#6B7585;font-size:12px">readiness </span>{g1} '
+            f'<span style="color:#2A3242">→</span> <b style="color:#3FB950">{g2}</b> '
+            f'<span style="color:#3FB950;font-size:13px">+{delta}</span></span>'
+            f'<span style="color:#9AA4B2;font-size:13px"><b style="color:#E7EAF0">{defects}</b> '
+            'defects caught — with receipts</span>'
+            f'<span style="color:#9AA4B2;font-size:13px"><b style="color:#E7EAF0">{gate_err}</b> '
+            'code-gate errors flagged</span>'
+            f'<span style="color:#9AA4B2;font-size:13px"><b style="color:#E7EAF0">{humans}</b> '
+            'decisions only a human can make</span>'
+            '<span style="color:#6B7585;font-size:11px;margin-left:auto">in the AnDigi case ↓</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
     theme.section("the problems", "What this system solves", "6 entries")
 
     cols = st.columns(2)
@@ -114,9 +154,11 @@ def render() -> None:
     )
 
     st.write("")
-    c1, _ = st.columns([2, 5])
-    if c1.button("💬 Open the team chat", type="primary", use_container_width=True):
+    c1, _ = st.columns([4, 3])
+    if c1.button("▶ Inspect the red-team report — catches with receipts",
+                 type="primary", use_container_width=True):
         st.session_state["view"] = "demo"
+        st.session_state["workspace"] = "Overview"
         st.rerun()
     st.markdown(
         '<p class="se-trace" style="margin-top:18px">All demo data is synthetic. '
