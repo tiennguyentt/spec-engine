@@ -146,6 +146,16 @@ h1, h2, h3 {
   .se-flink::before { content: '↓'; position: static; display: block; text-align: center; transform: none; color: var(--dim); }
   /* keep wide mono content (telemetry, reasoning) from forcing a sideways scroll */
   .se-telemetry, .se-reason, .se-leadfix { overflow-wrap: anywhere; }
+  /* Streamlit has no hamburger — it opens the sidebar via a tiny chevron. Turn
+     that control into an obvious gold menu button on mobile so the (optional)
+     advanced panel is discoverable. Multiple testids = robust across versions;
+     if none match it simply no-ops. */
+  [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"]{
+    background:var(--accent)!important;border-radius:11px!important;padding:6px 7px!important;
+    box-shadow:0 4px 14px rgba(0,0,0,.45)!important;display:flex!important;align-items:center!important;}
+  [data-testid="stSidebarCollapsedControl"] svg, [data-testid="collapsedControl"] svg,
+  [data-testid="stSidebarCollapsedControl"] path, [data-testid="collapsedControl"] path{
+    fill:#0A0B0D!important;color:#0A0B0D!important;width:24px!important;height:24px!important;}
 }
 
 /* ---- motion ----------------------------------------------------------- */
