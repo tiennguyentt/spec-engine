@@ -1,0 +1,1509 @@
+{
+  "meta": {
+    "kind": "live",
+    "concept": "spec-red-team",
+    "model": "deepseek/deepseek-chat",
+    "base_url": "https://openrouter.ai/api/v1",
+    "duration_seconds": 345.4,
+    "usage": {
+      "input_tokens": 50560,
+      "output_tokens": 8028
+    },
+    "token_budget": 300000,
+    "partial_reason": "",
+    "truth_hierarchy": "Truth hierarchy. Two categories of truth, never to be confused:\n\nBUSINESS RULES (what the system SHOULD do) - higher authority wins, conflicts\nmust still be flagged, never silently dropped:\n1. CEO/CTO decision        - explicit decisions stated by the decision-maker\n2. Written policy/contract - signed documents and published policy\n3. Ops statement           - operational practice described by leads\n4. Anecdote                - individual recollections, support stories\n\nARTIFACT STATE (what the system CURRENTLY does) - code and database are\nabsolute facts about current behavior; no spoken claim can override them.\nWhen intended behavior (business rule) and artifact state diverge, that gap\nis real and must surface as an explicit migration requirement.\n",
+    "evidence_files": [
+      "code-claims-sla.py.txt",
+      "db-claims-schema.sql",
+      "policy-claims-handling.md",
+      "transcript-01-founder-direction.md",
+      "transcript-02-claims-ops.md"
+    ],
+    "gate_version": "v1.0"
+  },
+  "stages": {
+    "wiki": {
+      "project_summary": "AnDigi Claims Handling System",
+      "claims": [
+        {
+          "id": "W1",
+          "topic": "Payout Timing",
+          "claim": "Approved claims are paid within 48 hours of the approval decision.",
+          "authority": "Written policy",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "policy-claims-handling.md",
+              "source_type": "doc",
+              "locator": "Section 5.1",
+              "speaker": "",
+              "quote": "Approved claims are paid within 48 hours of the approval decision."
+            }
+          ]
+        },
+        {
+          "id": "W2",
+          "topic": "Payout Timing",
+          "claim": "The team currently works to roughly a five-day turnaround after approval.",
+          "authority": "Ops statement",
+          "claim_class": "fact",
+          "sources": [
+            {
+              "source_file": "transcript-02-claims-ops.md",
+              "source_type": "transcript",
+              "locator": "",
+              "speaker": "Claims Ops Lead",
+              "quote": "On payout speed: the team currently works to roughly a five-day turnaround after approval."
+            }
+          ]
+        },
+        {
+          "id": "W3",
+          "topic": "Payout Timing",
+          "claim": "PAYOUT_SLA_HOURS is set to 120 (5 days from approval to disbursement).",
+          "authority": "Artifact state",
+          "claim_class": "artifact-state",
+          "sources": [
+            {
+              "source_file": "code-claims-sla.py.txt",
+              "source_type": "code",
+              "locator": "",
+              "speaker": "",
+              "quote": "PAYOUT_SLA_HOURS = 120  # 5 days from approval to disbursement"
+            }
+          ]
+        },
+        {
+          "id": "W4",
+          "topic": "Claim Review",
+          "claim": "Every claim is reviewed by a licensed human adjuster before any payout decision is issued.",
+          "authority": "Written policy",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "policy-claims-handling.md",
+              "source_type": "doc",
+              "locator": "Section 4.1",
+              "speaker": "",
+              "quote": "Every claim is reviewed by a licensed human adjuster before any payout decision is issued."
+            }
+          ]
+        },
+        {
+          "id": "W5",
+          "topic": "Claim Review",
+          "claim": "Claims under 5 million VND that pass AI triage get auto-approved instantly.",
+          "authority": "CEO/CTO decision",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "transcript-01-founder-direction.md",
+              "source_type": "transcript",
+              "locator": "",
+              "speaker": "CEO",
+              "quote": "claims under 5 million VND that pass AI triage get auto-approved instantly. No human in that path. Speed is the product."
+            }
+          ]
+        },
+        {
+          "id": "W6",
+          "topic": "Identity Verification",
+          "claim": "Policyholder identity is verified electronically (e-KYC) at onboarding.",
+          "authority": "Written policy",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "policy-claims-handling.md",
+              "source_type": "doc",
+              "locator": "Section 7.1",
+              "speaker": "",
+              "quote": "Policyholder identity is verified electronically (e-KYC) at onboarding."
+            }
+          ]
+        },
+        {
+          "id": "W7",
+          "topic": "Identity Verification",
+          "claim": "Re-verification is performed when a risk indicator triggers it.",
+          "authority": "Written policy",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "policy-claims-handling.md",
+              "source_type": "doc",
+              "locator": "Section 7.2",
+              "speaker": "",
+              "quote": "Re-verification is performed when a risk indicator triggers it."
+            }
+          ]
+        },
+        {
+          "id": "W8",
+          "topic": "Identity Verification",
+          "claim": "Customers verify identity once at onboarding. We do not ask again unless a risk flag fires.",
+          "authority": "CEO/CTO decision",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "transcript-01-founder-direction.md",
+              "source_type": "transcript",
+              "locator": "",
+              "speaker": "CEO",
+              "quote": "Customers verify identity once at onboarding. We do not ask again unless a risk flag fires."
+            }
+          ]
+        },
+        {
+          "id": "W9",
+          "topic": "Fraud Handling",
+          "claim": "Suspected fraud is investigated by a designated human investigator.",
+          "authority": "Written policy",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "policy-claims-handling.md",
+              "source_type": "doc",
+              "locator": "Section 9.1",
+              "speaker": "",
+              "quote": "Suspected fraud is investigated by a designated human investigator."
+            }
+          ]
+        },
+        {
+          "id": "W10",
+          "topic": "Fraud Handling",
+          "claim": "Any fraud flag routes to a human investigator, always. The AI never clears its own fraud flag.",
+          "authority": "CEO/CTO decision",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "transcript-01-founder-direction.md",
+              "source_type": "transcript",
+              "locator": "",
+              "speaker": "CEO",
+              "quote": "Any fraud flag routes to a human investigator, always. The AI never clears its own fraud flag."
+            }
+          ]
+        },
+        {
+          "id": "W11",
+          "topic": "Fraud Handling",
+          "claim": "Investigation records are retained for ten (10) years.",
+          "authority": "Written policy",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "policy-claims-handling.md",
+              "source_type": "doc",
+              "locator": "Section 9.2",
+              "speaker": "",
+              "quote": "Investigation records are retained for ten (10) years."
+            }
+          ]
+        },
+        {
+          "id": "W12",
+          "topic": "Claims Review Timing",
+          "claim": "Human adjuster reviews, decision within 3 business days.",
+          "authority": "CEO/CTO decision",
+          "claim_class": "decision",
+          "sources": [
+            {
+              "source_file": "transcript-01-founder-direction.md",
+              "source_type": "transcript",
+              "locator": "",
+              "speaker": "CEO",
+              "quote": "Human adjuster reviews, decision within 3 business days."
+            }
+          ]
+        },
+        {
+          "id": "W13",
+          "topic": "Claims Review Timing",
+          "claim": "ADJUSTER_DECISION_SLA_DAYS is set to 3.",
+          "authority": "Artifact state",
+          "claim_class": "artifact-state",
+          "sources": [
+            {
+              "source_file": "code-claims-sla.py.txt",
+              "source_type": "code",
+              "locator": "",
+              "speaker": "",
+              "quote": "ADJUSTER_DECISION_SLA_DAYS = 3"
+            }
+          ]
+        },
+        {
+          "id": "W14",
+          "topic": "Claims Status",
+          "claim": "Claims status can be 'fnol', 'triage', 'review', 'approved', 'paid', or 'rejected'.",
+          "authority": "Artifact state",
+          "claim_class": "artifact-state",
+          "sources": [
+            {
+              "source_file": "db-claims-schema.sql",
+              "source_type": "db",
+              "locator": "status field",
+              "speaker": "",
+              "quote": "status          TEXT NOT NULL DEFAULT 'fnol',      -- fnol|triage|review|approved|paid|rejected"
+            }
+          ]
+        },
+        {
+          "id": "W15",
+          "topic": "Fraud Flag",
+          "claim": "Claims have a fraud_flag field that defaults to FALSE.",
+          "authority": "Artifact state",
+          "claim_class": "artifact-state",
+          "sources": [
+            {
+              "source_file": "db-claims-schema.sql",
+              "source_type": "db",
+              "locator": "fraud_flag field",
+              "speaker": "",
+              "quote": "fraud_flag      BOOLEAN NOT NULL DEFAULT FALSE,"
+            }
+          ]
+        }
+      ]
+    },
+    "conflicts": {
+      "conflicts": [
+        {
+          "id": "C1",
+          "kind": "business-rule",
+          "claim_ids": [
+            "W1",
+            "W2"
+          ],
+          "description": "Written policy states approved claims are paid within 48 hours, but ops statement indicates a five-day turnaround.",
+          "winning_claim_id": "W1",
+          "winning_authority": "Written policy",
+          "resolution": "Update operational practices to align with written policy or revise policy to reflect actual practices.",
+          "needs_human_confirmation": true
+        },
+        {
+          "id": "C2",
+          "kind": "artifact-state-gap",
+          "claim_ids": [
+            "W1",
+            "W3"
+          ],
+          "description": "Written policy states approved claims are paid within 48 hours, but code sets PAYOUT_SLA_HOURS to 120 (5 days).",
+          "winning_claim_id": "W1",
+          "winning_authority": "Written policy",
+          "resolution": "Update PAYOUT_SLA_HOURS in code to 48 to align with policy, ensuring migration to handle existing claims.",
+          "needs_human_confirmation": false
+        },
+        {
+          "id": "C3",
+          "kind": "business-rule",
+          "claim_ids": [
+            "W4",
+            "W5"
+          ],
+          "description": "Written policy requires every claim to be reviewed by a human adjuster, but CEO decision states claims under 5 million VND get auto-approved.",
+          "winning_claim_id": "W5",
+          "winning_authority": "CEO/CTO decision",
+          "resolution": "Update written policy to reflect CEO decision on auto-approval for small claims.",
+          "needs_human_confirmation": true
+        },
+        {
+          "id": "C4",
+          "kind": "business-rule",
+          "claim_ids": [
+            "W6",
+            "W8"
+          ],
+          "description": "Written policy and CEO decision both state identity is verified at onboarding and re-verified only when a risk flag triggers, but written policy uses term 'e-KYC' while CEO uses simpler language.",
+          "winning_claim_id": "W8",
+          "winning_authority": "CEO/CTO decision",
+          "resolution": "No action needed as both agree on the rule; CEO's statement is the authoritative source.",
+          "needs_human_confirmation": false
+        },
+        {
+          "id": "C5",
+          "kind": "business-rule",
+          "claim_ids": [
+            "W9",
+            "W10"
+          ],
+          "description": "Written policy and CEO decision both state that fraud flags route to a human investigator, with CEO adding that AI never clears its own fraud flag.",
+          "winning_claim_id": "W10",
+          "winning_authority": "CEO/CTO decision",
+          "resolution": "No action needed as CEO's statement provides additional detail without contradicting policy.",
+          "needs_human_confirmation": false
+        },
+        {
+          "id": "C6",
+          "kind": "artifact-state-gap",
+          "claim_ids": [
+            "W12",
+            "W13"
+          ],
+          "description": "CEO decision states human adjuster reviews should result in a decision within 3 business days, and code aligns with this by setting ADJUSTER_DECISION_SLA_DAYS to 3.",
+          "winning_claim_id": "W12",
+          "winning_authority": "CEO/CTO decision",
+          "resolution": "No action needed as code correctly implements the intended behavior.",
+          "needs_human_confirmation": false
+        }
+      ],
+      "notes": "No conflicts found for claims W7, W11, W14, W15 as they are either standalone or corroborated by other claims."
+    },
+    "gate": {
+      "gate_version": "v1.0",
+      "hits": [
+        {
+          "rule_id": "G1",
+          "rule_class": "hedge-word",
+          "severity": "error",
+          "requirement_id": "R2",
+          "excerpt": "…auto-approved instantly, and the system should disburse the payout promptly after appr",
+          "message": "hedge-word: \"should\"",
+          "suggestion": "Replace the hedge with a definite behavior."
+        },
+        {
+          "rule_id": "G2",
+          "rule_class": "vague-quantity",
+          "severity": "error",
+          "requirement_id": "R2",
+          "excerpt": "…d the system should disburse the payout promptly after approval.",
+          "message": "vague-quantity: \"promptly\"",
+          "suggestion": "Replace with an explicit number or bound."
+        },
+        {
+          "rule_id": "G2",
+          "rule_class": "vague-quantity",
+          "severity": "error",
+          "requirement_id": "R2",
+          "excerpt": "…runs, then the payout will be processed quickly.",
+          "message": "vague-quantity: \"quickly\"",
+          "suggestion": "Replace with an explicit number or bound."
+        },
+        {
+          "rule_id": "G3",
+          "rule_class": "passive-future-voice",
+          "severity": "warning",
+          "requirement_id": "R2",
+          "excerpt": "…when disbursement runs, then the payout will be processed quickly.",
+          "message": "passive-future-voice: \"will be processed\"",
+          "suggestion": "Rewrite in active voice: actor + verb + object."
+        },
+        {
+          "rule_id": "G7",
+          "rule_class": "missing-provenance",
+          "severity": "error",
+          "requirement_id": "R3",
+          "excerpt": "Periodic e-KYC re-verification",
+          "message": "missing-provenance: requirement traces to zero claims",
+          "suggestion": "Link the requirement to wiki claim ids or tag the assumption."
+        },
+        {
+          "rule_id": "G6",
+          "rule_class": "tech-prescription-untagged",
+          "severity": "error",
+          "requirement_id": "R5",
+          "excerpt": "Triage session tokens are stored in Redis with a 30-minute TTL to keep the FNOL f",
+          "message": "tech-prescription-untagged: \"Redis\"",
+          "suggestion": "Tag with [needs-dev-input] or remove the implementation choice."
+        }
+      ],
+      "errors": 5,
+      "warnings": 1,
+      "verdict": "blocking"
+    },
+    "grade_round1": {
+      "checklist": [
+        {
+          "dimension": "D1",
+          "item": "every source requirement/decision addressed",
+          "result": "FAIL",
+          "note": "Claims W3, W4, W5, W9, W10, W11, W12, W13, W14, W15 not addressed in requirements"
+        },
+        {
+          "dimension": "D1",
+          "item": "no silent claim drops",
+          "result": "FAIL",
+          "note": "Claims W3, W4, W5, W9, W10, W11, W12, W13, W14, W15 silently dropped"
+        },
+        {
+          "dimension": "D1",
+          "item": "conflict resolutions reflected",
+          "result": "FAIL",
+          "note": "Conflict C1 (W1 vs W2) resolution not reflected in R2"
+        },
+        {
+          "dimension": "D2",
+          "item": ">=3 edge cases beyond sources",
+          "result": "FAIL",
+          "note": "Only 2 edge cases found across all requirements"
+        },
+        {
+          "dimension": "D2",
+          "item": "failure path per major requirement",
+          "result": "FAIL",
+          "note": "R2, R3, R4, R5, R6 lack failure paths"
+        },
+        {
+          "dimension": "D2",
+          "item": "measurable success criteria",
+          "result": "FAIL",
+          "note": "R2 ACs lack measurable criteria for 'promptly' and 'quickly'"
+        },
+        {
+          "dimension": "D3",
+          "item": "every domain fact traces to a claim id",
+          "result": "FAIL",
+          "note": "R3 traces to zero claims"
+        },
+        {
+          "dimension": "D3",
+          "item": "no invented numbers or SLAs",
+          "result": "FAIL",
+          "note": "R3 invents 90-day e-KYC re-verification without source"
+        },
+        {
+          "dimension": "D3",
+          "item": "regulatory claims MUST trace to a source in the corpus or be tagged as assumptions needing verification",
+          "result": "FAIL",
+          "note": "R3 makes untraced regulatory claim"
+        },
+        {
+          "dimension": "D4",
+          "item": "explicit out-of-scope",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D4",
+          "item": "no unplanned dependencies",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D5",
+          "item": "testable ACs",
+          "result": "FAIL",
+          "note": "R2 ACs use vague terms 'promptly' and 'quickly'"
+        },
+        {
+          "dimension": "D5",
+          "item": "explicit numbers",
+          "result": "FAIL",
+          "note": "R2 lacks explicit payout timing numbers"
+        },
+        {
+          "dimension": "D5",
+          "item": "no hedge words",
+          "result": "FAIL",
+          "note": "R2 uses 'should'"
+        },
+        {
+          "dimension": "D5",
+          "item": "active voice",
+          "result": "FAIL",
+          "note": "R2 uses passive voice 'will be processed'"
+        }
+      ],
+      "findings": [
+        {
+          "id": "F1",
+          "dimension": "D1",
+          "priority": "P1",
+          "requirement_id": "R2",
+          "evidence_ref": "C1",
+          "claim_class_violation": "",
+          "description": "Conflict C1 (W1 vs W2) resolution not reflected in R2",
+          "suggested_fix": "Update R2 to reflect 48-hour payout SLA per W1",
+          "assigned_role": "ba"
+        },
+        {
+          "id": "F2",
+          "dimension": "D3",
+          "priority": "P0",
+          "requirement_id": "R3",
+          "evidence_ref": "",
+          "claim_class_violation": "regulatory-assumption without source",
+          "description": "R3 makes untraced regulatory claim about 90-day e-KYC re-verification",
+          "suggested_fix": "Trace R3 to a source claim or tag as [needs-compliance-input]",
+          "assigned_role": "compliance"
+        },
+        {
+          "id": "F3",
+          "dimension": "D5",
+          "priority": "P1",
+          "requirement_id": "R2",
+          "evidence_ref": "G1",
+          "claim_class_violation": "",
+          "description": "R2 uses hedge word 'should'",
+          "suggested_fix": "Replace 'should' with definite behavior",
+          "assigned_role": "ba"
+        },
+        {
+          "id": "F4",
+          "dimension": "D5",
+          "priority": "P1",
+          "requirement_id": "R2",
+          "evidence_ref": "G2",
+          "claim_class_violation": "",
+          "description": "R2 uses vague quantities 'promptly' and 'quickly'",
+          "suggested_fix": "Replace with explicit numbers",
+          "assigned_role": "ba"
+        },
+        {
+          "id": "F5",
+          "dimension": "D5",
+          "priority": "P1",
+          "requirement_id": "R2",
+          "evidence_ref": "G3",
+          "claim_class_violation": "",
+          "description": "R2 uses passive voice 'will be processed'",
+          "suggested_fix": "Rewrite in active voice",
+          "assigned_role": "ba"
+        },
+        {
+          "id": "F6",
+          "dimension": "D5",
+          "priority": "P1",
+          "requirement_id": "R5",
+          "evidence_ref": "G6",
+          "claim_class_violation": "",
+          "description": "R5 prescribes Redis without [needs-dev-input] tag",
+          "suggested_fix": "Tag Redis choice with [needs-dev-input]",
+          "assigned_role": "dev"
+        }
+      ],
+      "scores": {
+        "D1": 30,
+        "D2": 20,
+        "D3": 20,
+        "D4": 100,
+        "D5": 20
+      },
+      "overall_score": 30,
+      "verdict": "NEEDS_REVISION"
+    },
+    "debate": {
+      "phases": [
+        {
+          "key": "product",
+          "title": "Product & Requirements Integrity",
+          "eligible": [
+            "po",
+            "ba",
+            "ux"
+          ],
+          "events": [
+            {
+              "type": "router",
+              "issue_id": "F1",
+              "summoned_roles": [
+                "ba"
+              ],
+              "focused_question": "Does the suggested fix to update R2 with a 48-hour payout SLA accurately resolve the conflict between W1 and W2 as documented in C1?",
+              "close_phase": false,
+              "net_movement": "",
+              "iteration": 1
+            },
+            {
+              "type": "turn",
+              "phase": "product",
+              "role": "ba",
+              "issue_id": "F1",
+              "work_notes": {
+                "observation": "Inspected conflict C1 between W1 (48hr payout policy) and W2 (5-day ops practice)",
+                "evidence_refs": [
+                  "W1",
+                  "W2",
+                  "C1"
+                ],
+                "risk": "Policy-violating operational latency",
+                "proposed_change": "Update R2 to enforce 48hr payout SLA",
+                "confidence": "high",
+                "open_assumption": "Migration path exists for legacy claims"
+              },
+              "stance": "challenge",
+              "message": "Conflict C1 resolution requires updating R2 to enforce W1's 48hr payout SLA. Current draft retains ops practice (W2) without acknowledging policy violation. Changing R2 resolves this.",
+              "refs": [
+                "C1",
+                "R2"
+              ]
+            },
+            {
+              "type": "router",
+              "issue_id": "F3",
+              "summoned_roles": [
+                "ba"
+              ],
+              "focused_question": "Should the word 'should' in R2 be replaced with a definite behavior to ensure clarity and enforceability?",
+              "close_phase": false,
+              "net_movement": "",
+              "iteration": 2
+            },
+            {
+              "type": "turn",
+              "phase": "product",
+              "role": "ba",
+              "issue_id": "F3",
+              "work_notes": {
+                "observation": "Inspected R2's 'should' wording and its alignment with W1 and W2.",
+                "evidence_refs": [
+                  "W1",
+                  "W2",
+                  "C1"
+                ],
+                "risk": "R2's 'should' creates ambiguity, conflicting with W1's 48hr SLA.",
+                "proposed_change": "Replace 'should' with 'must' to enforce 48hr payout SLA.",
+                "confidence": "high",
+                "open_assumption": ""
+              },
+              "stance": "challenge",
+              "message": "R2's 'should' contradicts W1's 48hr payout SLA. Replace with 'must' to enforce policy compliance and resolve C1. Ref: R2, W1, C1.",
+              "refs": [
+                "R2",
+                "W1",
+                "C1"
+              ]
+            },
+            {
+              "type": "router",
+              "issue_id": "F4",
+              "summoned_roles": [
+                "ba",
+                "ux"
+              ],
+              "focused_question": "How should 'promptly' and 'quickly' in R2 be quantified to align with W1's 48hr SLA while maintaining user experience expectations?",
+              "close_phase": false,
+              "net_movement": "",
+              "iteration": 3
+            },
+            {
+              "type": "turn",
+              "phase": "product",
+              "role": "ba",
+              "issue_id": "F4",
+              "work_notes": {
+                "observation": "Inspected R2's vague terms 'promptly' and 'quickly' against W1's 48hr SLA",
+                "evidence_refs": [
+                  "W1",
+                  "W2",
+                  "R2",
+                  "C1"
+                ],
+                "risk": "User experience misalignment with policy compliance",
+                "proposed_change": "Replace 'promptly' and 'quickly' with 'within 48 hours' in R2",
+                "confidence": "high",
+                "open_assumption": "Operations can meet 48hr SLA with system adjustments"
+              },
+              "stance": "challenge",
+              "message": "R2 must specify 'within 48 hours' per W1's SLA to resolve C1. Vague terms create compliance risk. Update R2 AC to enforce policy.",
+              "refs": [
+                "R2",
+                "W1",
+                "C1"
+              ]
+            },
+            {
+              "type": "turn",
+              "phase": "product",
+              "role": "ux",
+              "issue_id": "F4",
+              "work_notes": {
+                "observation": "Inspected R2's vague 'promptly' and 'quickly' terms",
+                "evidence_refs": [
+                  "R2",
+                  "W1",
+                  "C1"
+                ],
+                "risk": "User confusion on payout timing expectations",
+                "proposed_change": "Replace vague terms with 'within 48 hours'",
+                "confidence": "high",
+                "open_assumption": "Users prioritize clarity over flexibility"
+              },
+              "stance": "challenge",
+              "message": "R2's ambiguity violates W1 SLA (C1). Users need clear payout timing. Replace 'promptly' with 'within 48 hours' in R2 AC to align UX with policy. Ref: R2, W1, C1",
+              "refs": [
+                "R2",
+                "W1",
+                "C1"
+              ]
+            },
+            {
+              "type": "no_objection",
+              "phase": "product",
+              "role": "po"
+            }
+          ]
+        },
+        {
+          "key": "architecture",
+          "title": "Architecture & Feasibility",
+          "eligible": [
+            "sa",
+            "eng"
+          ],
+          "events": [
+            {
+              "type": "router",
+              "issue_id": "",
+              "summoned_roles": [],
+              "focused_question": "",
+              "close_phase": true,
+              "net_movement": "The phase resolved R2's ambiguity by enforcing W1's 48hr payout SLA through clear language updates. This aligns operational practice with policy requirements while improving user expectations.",
+              "iteration": 1
+            },
+            {
+              "type": "no_objection",
+              "phase": "architecture",
+              "role": "sa"
+            },
+            {
+              "type": "no_objection",
+              "phase": "architecture",
+              "role": "eng"
+            }
+          ]
+        },
+        {
+          "key": "quality",
+          "title": "Quality & Operations",
+          "eligible": [
+            "qa",
+            "devops"
+          ],
+          "events": [
+            {
+              "type": "router",
+              "issue_id": "",
+              "summoned_roles": [],
+              "focused_question": "",
+              "close_phase": true,
+              "net_movement": "R2 was updated to enforce W1's 48hr payout SLA by replacing vague language with specific timing. This resolves C1 by ensuring policy compliance and clear user expectations.",
+              "iteration": 1
+            },
+            {
+              "type": "no_objection",
+              "phase": "quality",
+              "role": "qa"
+            },
+            {
+              "type": "no_objection",
+              "phase": "quality",
+              "role": "devops"
+            }
+          ]
+        },
+        {
+          "key": "risk",
+          "title": "Risk, Compliance & Security",
+          "eligible": [
+            "compliance",
+            "security"
+          ],
+          "events": [
+            {
+              "type": "router",
+              "issue_id": "F2",
+              "summoned_roles": [
+                "compliance"
+              ],
+              "focused_question": "Can you trace R3's 90-day e-KYC re-verification requirement to a specific regulatory source, or should it be tagged as needing compliance input?",
+              "close_phase": false,
+              "net_movement": "",
+              "iteration": 1
+            },
+            {
+              "type": "turn",
+              "phase": "risk",
+              "role": "compliance",
+              "issue_id": "F2",
+              "work_notes": {
+                "observation": "Inspected R3's 90-day e-KYC re-verification claim",
+                "evidence_refs": [
+                  "R3",
+                  "F2"
+                ],
+                "risk": "Untraced regulatory claim creates compliance risk",
+                "proposed_change": "Tag R3 with [needs-compliance-input]",
+                "confidence": "high",
+                "open_assumption": "No regulatory source found for 90-day e-KYC re-verification"
+              },
+              "stance": "challenge",
+              "message": "R3's 90-day e-KYC re-verification lacks regulatory grounding (F2). Until sourced, tag as [needs-compliance-input] to prevent policy violation. Ref: R3, F2",
+              "refs": [
+                "R3",
+                "F2"
+              ]
+            },
+            {
+              "type": "router",
+              "issue_id": "",
+              "summoned_roles": [],
+              "focused_question": "",
+              "close_phase": true,
+              "net_movement": "The phase resolved R2's payout timing ambiguity by enforcing W1's 48hr SLA, while flagging R3's e-KYC rule for future compliance review. Key policy conflicts were addressed through precise language updates.",
+              "iteration": 2
+            },
+            {
+              "type": "no_objection",
+              "phase": "risk",
+              "role": "security"
+            }
+          ]
+        },
+        {
+          "key": "synthesis",
+          "title": "Synthesis",
+          "eligible": [
+            "sm"
+          ],
+          "events": [
+            {
+              "type": "router",
+              "issue_id": "",
+              "summoned_roles": [],
+              "focused_question": "",
+              "close_phase": true,
+              "net_movement": "The phase resolved R2's SLA ambiguity by mandating 'within 48 hours' to align with W1's policy, while flagging R3's e-KYC requirement for future compliance review.",
+              "iteration": 1
+            },
+            {
+              "type": "no_objection",
+              "phase": "synthesis",
+              "role": "sm"
+            }
+          ]
+        }
+      ],
+      "turns": [
+        {
+          "phase": "product",
+          "role": "ba",
+          "issue_id": "F1",
+          "work_notes": {
+            "observation": "Inspected conflict C1 between W1 (48hr payout policy) and W2 (5-day ops practice)",
+            "evidence_refs": [
+              "W1",
+              "W2",
+              "C1"
+            ],
+            "risk": "Policy-violating operational latency",
+            "proposed_change": "Update R2 to enforce 48hr payout SLA",
+            "confidence": "high",
+            "open_assumption": "Migration path exists for legacy claims"
+          },
+          "stance": "challenge",
+          "message": "Conflict C1 resolution requires updating R2 to enforce W1's 48hr payout SLA. Current draft retains ops practice (W2) without acknowledging policy violation. Changing R2 resolves this.",
+          "refs": [
+            "C1",
+            "R2"
+          ]
+        },
+        {
+          "phase": "product",
+          "role": "ba",
+          "issue_id": "F3",
+          "work_notes": {
+            "observation": "Inspected R2's 'should' wording and its alignment with W1 and W2.",
+            "evidence_refs": [
+              "W1",
+              "W2",
+              "C1"
+            ],
+            "risk": "R2's 'should' creates ambiguity, conflicting with W1's 48hr SLA.",
+            "proposed_change": "Replace 'should' with 'must' to enforce 48hr payout SLA.",
+            "confidence": "high",
+            "open_assumption": ""
+          },
+          "stance": "challenge",
+          "message": "R2's 'should' contradicts W1's 48hr payout SLA. Replace with 'must' to enforce policy compliance and resolve C1. Ref: R2, W1, C1.",
+          "refs": [
+            "R2",
+            "W1",
+            "C1"
+          ]
+        },
+        {
+          "phase": "product",
+          "role": "ba",
+          "issue_id": "F4",
+          "work_notes": {
+            "observation": "Inspected R2's vague terms 'promptly' and 'quickly' against W1's 48hr SLA",
+            "evidence_refs": [
+              "W1",
+              "W2",
+              "R2",
+              "C1"
+            ],
+            "risk": "User experience misalignment with policy compliance",
+            "proposed_change": "Replace 'promptly' and 'quickly' with 'within 48 hours' in R2",
+            "confidence": "high",
+            "open_assumption": "Operations can meet 48hr SLA with system adjustments"
+          },
+          "stance": "challenge",
+          "message": "R2 must specify 'within 48 hours' per W1's SLA to resolve C1. Vague terms create compliance risk. Update R2 AC to enforce policy.",
+          "refs": [
+            "R2",
+            "W1",
+            "C1"
+          ]
+        },
+        {
+          "phase": "product",
+          "role": "ux",
+          "issue_id": "F4",
+          "work_notes": {
+            "observation": "Inspected R2's vague 'promptly' and 'quickly' terms",
+            "evidence_refs": [
+              "R2",
+              "W1",
+              "C1"
+            ],
+            "risk": "User confusion on payout timing expectations",
+            "proposed_change": "Replace vague terms with 'within 48 hours'",
+            "confidence": "high",
+            "open_assumption": "Users prioritize clarity over flexibility"
+          },
+          "stance": "challenge",
+          "message": "R2's ambiguity violates W1 SLA (C1). Users need clear payout timing. Replace 'promptly' with 'within 48 hours' in R2 AC to align UX with policy. Ref: R2, W1, C1",
+          "refs": [
+            "R2",
+            "W1",
+            "C1"
+          ]
+        },
+        {
+          "phase": "risk",
+          "role": "compliance",
+          "issue_id": "F2",
+          "work_notes": {
+            "observation": "Inspected R3's 90-day e-KYC re-verification claim",
+            "evidence_refs": [
+              "R3",
+              "F2"
+            ],
+            "risk": "Untraced regulatory claim creates compliance risk",
+            "proposed_change": "Tag R3 with [needs-compliance-input]",
+            "confidence": "high",
+            "open_assumption": "No regulatory source found for 90-day e-KYC re-verification"
+          },
+          "stance": "challenge",
+          "message": "R3's 90-day e-KYC re-verification lacks regulatory grounding (F2). Until sourced, tag as [needs-compliance-input] to prevent policy violation. Ref: R3, F2",
+          "refs": [
+            "R3",
+            "F2"
+          ]
+        }
+      ],
+      "arbiter": {
+        "amendments": [
+          {
+            "requirement_id": "R2",
+            "finding_ids": [
+              "F1",
+              "F3",
+              "F4",
+              "F5"
+            ],
+            "before": "Claims under 5,000,000 VND with a passing triage score and no fraud flag are auto-approved instantly, and the system should disburse the payout promptly after approval.",
+            "after": "Claims under 5,000,000 VND with a passing triage score and no fraud flag are auto-approved instantly, and the system must disburse the payout within 48 hours of approval.",
+            "rationale": "Aligns with W1's 48-hour payout SLA per C1 resolution, replacing vague terms with explicit policy-compliant timing"
+          },
+          {
+            "requirement_id": "R2",
+            "finding_ids": [
+              "F1",
+              "F3",
+              "F4",
+              "F5"
+            ],
+            "before": "Given an approved claim, when disbursement runs, then the payout will be processed quickly.",
+            "after": "Given an approved claim, when disbursement runs, then the payout must be processed within 48 hours.",
+            "rationale": "Enforces W1's 48-hour payout SLA in AC, replacing passive voice and vague timing with explicit policy-compliant requirement"
+          },
+          {
+            "requirement_id": "R3",
+            "finding_ids": [
+              "F2"
+            ],
+            "before": "Per Circular 14/2026 on digital insurance distribution, customer e-KYC data must be re-verified every 90 days, and claims from customers with expired verification are held until re-verification completes.",
+            "after": "[needs-compliance-input] Customer e-KYC data must be re-verified periodically, and claims from customers with expired verification are held until re-verification completes.",
+            "rationale": "Removes unsourced 90-day claim per F2, tagging for compliance input to prevent policy violation"
+          },
+          {
+            "requirement_id": "R5",
+            "finding_ids": [
+              "F6"
+            ],
+            "before": "Triage session tokens are stored in Redis with a 30-minute TTL to keep the FNOL flow stateless across app restarts.",
+            "after": "[needs-dev-input] Triage session tokens are stored in a session store with a 30-minute TTL to keep the FNOL flow stateless across app restarts.",
+            "rationale": "Removes Redis prescription per F6, tagging for dev input on implementation choice"
+          }
+        ],
+        "new_requirements": [
+          {
+            "id": "MR1",
+            "title": "PAYOUT_SLA_HOURS migration",
+            "statement": "Update PAYOUT_SLA_HOURS in code to 48 to align with policy, ensuring migration to handle existing claims.",
+            "acceptance_criteria": [
+              "Given PAYOUT_SLA_HOURS is currently 120, when the migration runs, then it is updated to 48.",
+              "Given existing claims with PAYOUT_SLA_HOURS=120, when the migration runs, then their payout timing is recalculated based on 48-hour SLA."
+            ],
+            "source_claim_ids": [
+              "W1",
+              "W3"
+            ]
+          }
+        ],
+        "unresolved_human_decisions": [
+          "Confirm whether to update operational practices to align with W1's 48-hour payout SLA or revise policy to reflect actual five-day practices (C1)",
+          "Confirm whether to update written policy to reflect CEO decision on auto-approval for small claims (C3)"
+        ],
+        "summary": "Amendments enforce 48-hour payout SLA per policy, tag unsourced regulatory claims and implementation choices for input, and add migration requirement for PAYOUT_SLA_HOURS update. Human decisions needed on payout timing policy alignment and small claims auto-approval policy update."
+      }
+    },
+    "corrected_spec": {
+      "feature_name": "AnDigi v1 — Claims FNOL & AI Triage",
+      "summary": "Customers file first-notice-of-loss in the app. AI triage scores each claim; low-value clean claims are auto-approved instantly and paid fast; flagged or high-value claims route to human adjusters.",
+      "out_of_scope": [
+        "Underwriting and policy issuance changes",
+        "Marketing-side claim status notifications beyond app push"
+      ],
+      "requirements": [
+        {
+          "id": "R1",
+          "title": "FNOL submission",
+          "statement": "The app lets a policyholder file a claim with photos, an incident description, and the incident date, creating a claim in status fnol.",
+          "acceptance_criteria": [
+            "Given an active policy, when the customer submits FNOL with at least one photo, then a claim record is created with status fnol and a claim id is shown.",
+            "Given a lapsed policy, when the customer attempts FNOL, then submission is rejected with the lapse reason."
+          ],
+          "source_claim_ids": [
+            "W1"
+          ]
+        },
+        {
+          "id": "R2",
+          "title": "Instant auto-approval for low-value claims",
+          "statement": "Claims under 5,000,000 VND with a passing triage score and no fraud flag are auto-approved instantly, and the system must disburse the payout within 48 hours of approval.",
+          "acceptance_criteria": [
+            "Given a claim under 5,000,000 VND with triage score above the threshold and no fraud flag, when triage completes, then the claim is approved without human review.",
+            "Given an approved claim, when disbursement runs, then the payout must be processed within 48 hours."
+          ],
+          "source_claim_ids": [
+            "W2"
+          ]
+        },
+        {
+          "id": "R3",
+          "title": "Periodic e-KYC re-verification",
+          "statement": "[needs-compliance-input] Customer e-KYC data must be re-verified periodically, and claims from customers with expired verification are held until re-verification completes.",
+          "acceptance_criteria": [
+            "Given a customer whose last e-KYC verification is older than 90 days, when they file a claim, then the claim is held in status review until re-verification completes."
+          ],
+          "source_claim_ids": []
+        },
+        {
+          "id": "R4",
+          "title": "Fraud flag routing",
+          "statement": "Any claim with a fraud flag routes to a human investigator; the AI never clears its own fraud flag, and the investigation record is retained for ten years.",
+          "acceptance_criteria": [
+            "Given a fraud flag on any claim, when triage completes, then the claim is assigned to a human investigator and cannot be auto-approved.",
+            "Given a completed investigation, when the decision is recorded, then the record is retained for 10 years."
+          ],
+          "source_claim_ids": [
+            "W6",
+            "W7"
+          ]
+        },
+        {
+          "id": "R5",
+          "title": "Triage session storage",
+          "statement": "[needs-dev-input] Triage session tokens are stored in a session store with a 30-minute TTL to keep the FNOL flow stateless across app restarts.",
+          "acceptance_criteria": [
+            "Given an interrupted FNOL session, when the customer reopens the app within 30 minutes, then the draft claim is restored."
+          ],
+          "source_claim_ids": [
+            "W1"
+          ]
+        },
+        {
+          "id": "R6",
+          "title": "High-value claim review",
+          "statement": "Claims of 5,000,000 VND or more are reviewed by a human adjuster who records a decision within 3 business days.",
+          "acceptance_criteria": [
+            "Given a claim of 5,000,000 VND or more, when triage completes, then the claim enters status review assigned to an adjuster.",
+            "Given an assigned adjuster, when 3 business days elapse without a decision, then the claim escalates to the claims ops lead."
+          ],
+          "source_claim_ids": [
+            "W8"
+          ]
+        },
+        {
+          "id": "MR1",
+          "title": "PAYOUT_SLA_HOURS migration",
+          "statement": "Update PAYOUT_SLA_HOURS in code to 48 to align with policy, ensuring migration to handle existing claims.",
+          "acceptance_criteria": [
+            "Given PAYOUT_SLA_HOURS is currently 120, when the migration runs, then it is updated to 48.",
+            "Given existing claims with PAYOUT_SLA_HOURS=120, when the migration runs, then their payout timing is recalculated based on 48-hour SLA."
+          ],
+          "source_claim_ids": [
+            "W1",
+            "W3"
+          ]
+        }
+      ]
+    },
+    "gate_round2": {
+      "gate_version": "v1.0",
+      "hits": [
+        {
+          "rule_id": "G7",
+          "rule_class": "missing-provenance",
+          "severity": "error",
+          "requirement_id": "R3",
+          "excerpt": "Periodic e-KYC re-verification",
+          "message": "missing-provenance: requirement traces to zero claims",
+          "suggestion": "Link the requirement to wiki claim ids or tag the assumption."
+        }
+      ],
+      "errors": 1,
+      "warnings": 0,
+      "verdict": "blocking"
+    },
+    "grade_round2": {
+      "checklist": [
+        {
+          "dimension": "D1",
+          "item": "every source requirement/decision addressed",
+          "result": "FAIL",
+          "note": "Claims W4, W11-W15 are not addressed in the spec."
+        },
+        {
+          "dimension": "D1",
+          "item": "no silent claim drops",
+          "result": "FAIL",
+          "note": "Claims W4, W11-W15 are silently dropped without explanation."
+        },
+        {
+          "dimension": "D1",
+          "item": "conflict resolutions reflected",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D2",
+          "item": ">=3 edge cases beyond sources",
+          "result": "FAIL",
+          "note": "Few edge cases are covered beyond the basic requirements."
+        },
+        {
+          "dimension": "D2",
+          "item": "failure path per major requirement",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D2",
+          "item": "measurable success criteria",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D3",
+          "item": "every domain fact traces to a claim id",
+          "result": "FAIL",
+          "note": "R3 lacks a claim id and has regulatory implications."
+        },
+        {
+          "dimension": "D3",
+          "item": "no invented numbers or SLAs",
+          "result": "FAIL",
+          "note": "R3 introduces a 90-day re-verification period without a source."
+        },
+        {
+          "dimension": "D3",
+          "item": "regulatory claims MUST trace to a source in the corpus or be tagged as assumptions needing verification",
+          "result": "FAIL",
+          "note": "R3 claims regulatory status without a source."
+        },
+        {
+          "dimension": "D4",
+          "item": "explicit out-of-scope",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D4",
+          "item": "no unplanned dependencies",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D5",
+          "item": "testable ACs",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D5",
+          "item": "explicit numbers",
+          "result": "PASS",
+          "note": ""
+        },
+        {
+          "dimension": "D5",
+          "item": "no hedge words",
+          "result": "FAIL",
+          "note": "R5 includes '[needs-dev-input]'."
+        },
+        {
+          "dimension": "D5",
+          "item": "active voice",
+          "result": "PASS",
+          "note": ""
+        }
+      ],
+      "findings": [
+        {
+          "id": "F1",
+          "dimension": "D1",
+          "priority": "P1",
+          "requirement_id": "R1",
+          "evidence_ref": "W4, W11-W15",
+          "claim_class_violation": "",
+          "description": "Claims W4, W11-W15 are not addressed in the spec.",
+          "suggested_fix": "Add requirements to cover these claims or explicitly mark them as out-of-scope.",
+          "assigned_role": "ba"
+        },
+        {
+          "id": "F2",
+          "dimension": "D2",
+          "priority": "P2",
+          "requirement_id": "R1",
+          "evidence_ref": "",
+          "claim_class_violation": "",
+          "description": "Few edge cases are covered beyond the basic requirements.",
+          "suggested_fix": "Add edge cases, such as handling duplicate claims or fraudulent FNOL submissions.",
+          "assigned_role": "qa"
+        },
+        {
+          "id": "F3",
+          "dimension": "D3",
+          "priority": "P0",
+          "requirement_id": "R3",
+          "evidence_ref": "",
+          "claim_class_violation": "regulatory-assumption without source",
+          "description": "R3 lacks a claim id and has regulatory implications.",
+          "suggested_fix": "Link R3 to a regulatory claim id or tag it as an assumption needing compliance verification.",
+          "assigned_role": "compliance"
+        },
+        {
+          "id": "F4",
+          "dimension": "D3",
+          "priority": "P1",
+          "requirement_id": "R3",
+          "evidence_ref": "",
+          "claim_class_violation": "",
+          "description": "R3 introduces a 90-day re-verification period without a source.",
+          "suggested_fix": "Justify the 90-day period with a source or stakeholder input.",
+          "assigned_role": "compliance"
+        },
+        {
+          "id": "F5",
+          "dimension": "D5",
+          "priority": "P2",
+          "requirement_id": "R5",
+          "evidence_ref": "",
+          "claim_class_violation": "",
+          "description": "R5 includes '[needs-dev-input]'.",
+          "suggested_fix": "Replace with a concrete requirement or defer the item.",
+          "assigned_role": "eng"
+        }
+      ],
+      "scores": {
+        "D1": 60,
+        "D2": 70,
+        "D3": 40,
+        "D4": 100,
+        "D5": 80
+      },
+      "overall_score": 68,
+      "verdict": "NEEDS_REVISION"
+    },
+    "draft_spec": {
+      "feature_name": "AnDigi v1 — Claims FNOL & AI Triage",
+      "summary": "Customers file first-notice-of-loss in the app. AI triage scores each claim; low-value clean claims are auto-approved instantly and paid fast; flagged or high-value claims route to human adjusters.",
+      "out_of_scope": [
+        "Underwriting and policy issuance changes",
+        "Marketing-side claim status notifications beyond app push"
+      ],
+      "requirements": [
+        {
+          "id": "R1",
+          "title": "FNOL submission",
+          "statement": "The app lets a policyholder file a claim with photos, an incident description, and the incident date, creating a claim in status fnol.",
+          "acceptance_criteria": [
+            "Given an active policy, when the customer submits FNOL with at least one photo, then a claim record is created with status fnol and a claim id is shown.",
+            "Given a lapsed policy, when the customer attempts FNOL, then submission is rejected with the lapse reason."
+          ],
+          "source_claim_ids": [
+            "W1"
+          ]
+        },
+        {
+          "id": "R2",
+          "title": "Instant auto-approval for low-value claims",
+          "statement": "Claims under 5,000,000 VND with a passing triage score and no fraud flag are auto-approved instantly, and the system should disburse the payout promptly after approval.",
+          "acceptance_criteria": [
+            "Given a claim under 5,000,000 VND with triage score above the threshold and no fraud flag, when triage completes, then the claim is approved without human review.",
+            "Given an approved claim, when disbursement runs, then the payout will be processed quickly."
+          ],
+          "source_claim_ids": [
+            "W2"
+          ]
+        },
+        {
+          "id": "R3",
+          "title": "Periodic e-KYC re-verification",
+          "statement": "Per Circular 14/2026 on digital insurance distribution, customer e-KYC data must be re-verified every 90 days, and claims from customers with expired verification are held until re-verification completes.",
+          "acceptance_criteria": [
+            "Given a customer whose last e-KYC verification is older than 90 days, when they file a claim, then the claim is held in status review until re-verification completes."
+          ],
+          "source_claim_ids": []
+        },
+        {
+          "id": "R4",
+          "title": "Fraud flag routing",
+          "statement": "Any claim with a fraud flag routes to a human investigator; the AI never clears its own fraud flag, and the investigation record is retained for ten years.",
+          "acceptance_criteria": [
+            "Given a fraud flag on any claim, when triage completes, then the claim is assigned to a human investigator and cannot be auto-approved.",
+            "Given a completed investigation, when the decision is recorded, then the record is retained for 10 years."
+          ],
+          "source_claim_ids": [
+            "W6",
+            "W7"
+          ]
+        },
+        {
+          "id": "R5",
+          "title": "Triage session storage",
+          "statement": "Triage session tokens are stored in Redis with a 30-minute TTL to keep the FNOL flow stateless across app restarts.",
+          "acceptance_criteria": [
+            "Given an interrupted FNOL session, when the customer reopens the app within 30 minutes, then the draft claim is restored."
+          ],
+          "source_claim_ids": [
+            "W1"
+          ]
+        },
+        {
+          "id": "R6",
+          "title": "High-value claim review",
+          "statement": "Claims of 5,000,000 VND or more are reviewed by a human adjuster who records a decision within 3 business days.",
+          "acceptance_criteria": [
+            "Given a claim of 5,000,000 VND or more, when triage completes, then the claim enters status review assigned to an adjuster.",
+            "Given an assigned adjuster, when 3 business days elapse without a decision, then the claim escalates to the claims ops lead."
+          ],
+          "source_claim_ids": [
+            "W8"
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "seq": 1,
+      "type": "lifecycle",
+      "state": "draft",
+      "note": "loaded 5 evidence sources + draft spec"
+    },
+    {
+      "seq": 2,
+      "type": "stage_done",
+      "stage": "wiki",
+      "claims": 15
+    },
+    {
+      "seq": 3,
+      "type": "stage_done",
+      "stage": "conflicts",
+      "conflicts": 6
+    },
+    {
+      "seq": 4,
+      "type": "gate",
+      "errors": 5,
+      "warnings": 1,
+      "verdict": "blocking"
+    },
+    {
+      "seq": 5,
+      "type": "lifecycle",
+      "state": "graded",
+      "note": "round 1 of 3"
+    },
+    {
+      "seq": 6,
+      "type": "grade",
+      "round": 1,
+      "overall": 30,
+      "verdict": "NEEDS_REVISION",
+      "p0": 1
+    },
+    {
+      "seq": 7,
+      "type": "debate_done",
+      "turns": 5,
+      "amendments": 4
+    },
+    {
+      "seq": 8,
+      "type": "amendments_applied",
+      "count": 4,
+      "new_requirements": 1
+    },
+    {
+      "seq": 9,
+      "type": "lifecycle",
+      "state": "graded",
+      "note": "round 2 of 3 (post-debate re-grade)"
+    },
+    {
+      "seq": 10,
+      "type": "grade",
+      "round": 2,
+      "overall": 68,
+      "verdict": "NEEDS_REVISION",
+      "p0": 1
+    },
+    {
+      "seq": 11,
+      "type": "lifecycle",
+      "state": "blocked",
+      "note": "round-2 grade still NEEDS_REVISION; round 3 reserved for human-directed revision"
+    }
+  ],
+  "lifecycle": [
+    {
+      "state": "draft",
+      "note": "loaded 5 evidence sources + draft spec"
+    },
+    {
+      "state": "graded",
+      "note": "round 1 of 3"
+    },
+    {
+      "state": "graded",
+      "note": "round 2 of 3 (post-debate re-grade)"
+    },
+    {
+      "state": "blocked",
+      "note": "round-2 grade still NEEDS_REVISION; round 3 reserved for human-directed revision"
+    }
+  ],
+  "signoff": {
+    "status": "pending",
+    "by": null
+  }
+}

@@ -42,9 +42,9 @@ with st.sidebar:
 
     st.header("Run")
     runs = list_runs()
-    # default to a real (live) recorded run so the landing proves real inference,
-    # not the scripted replay; fall back to whatever exists
-    _default_idx = next((i for i, p in enumerate(runs) if p.stem.startswith("live-")), 0)
+    # default to a real recorded run (anything but the scripted "demo-*") so the
+    # landing proves real inference; fall back to whatever exists
+    _default_idx = next((i for i, p in enumerate(runs) if not p.stem.startswith("demo")), 0)
     chosen = (st.selectbox("Recorded run", runs, index=_default_idx, format_func=lambda p: p.stem)
               if runs else None)
 
