@@ -8,7 +8,9 @@ then build blocks with the helpers below (they return HTML strings; pass
 them to `theme.card(...)` / `st.markdown(..., unsafe_allow_html=True)`).
 """
 
+import hashlib as _hashlib
 import html as _html
+import json as _json
 
 import streamlit as st
 
@@ -342,6 +344,40 @@ h1, h2, h3 {
 @keyframes seFlow { 0% { left: -14px; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { left: calc(100% - 2px); opacity: 0; } }
 .se-flink::before { content: '▸'; position: absolute; right: -7px; top: 50%; transform: translateY(-50%); color: var(--line-strong); font-size: 11px; }
 .se-flow-cap { font-family: 'Schibsted Grotesk', sans-serif; font-weight: 740; font-size: clamp(24px, 3.4vw, 38px); letter-spacing: -0.028em; color: var(--ink); line-height: 1.1; margin: 6px 0 10px; }
+
+/* ── inference-trace telemetry strip: real run, real numbers ──────── */
+.se-telemetry {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: .02em;
+  color: var(--muted); border: 1px solid var(--line);
+  background: rgba(15,17,19,.6); border-radius: 10px; padding: 9px 15px; margin: 2px 0 16px;
+}
+.se-telemetry .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: seBlink 1.4s steps(1) infinite; }
+.se-telemetry .lbl { color: var(--dim); text-transform: uppercase; letter-spacing: .15em; font-size: 9.5px; }
+.se-telemetry b { color: var(--ink); font-weight: 600; }
+.se-telemetry .gold { color: var(--accent); }
+.se-telemetry .sep { color: var(--line-strong); }
+
+/* ── lead artifact: one defect, struck out and corrected, in 3s ───── */
+.se-leadfix {
+  border: 1px solid var(--line-strong); border-left: 2px solid var(--accent);
+  background: linear-gradient(180deg, var(--raised), var(--surface));
+  border-radius: 0 12px 12px 12px; padding: 18px 20px; margin: 14px 0 18px;
+}
+.se-leadfix .lf-k { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 13px; }
+.se-leadfix .lf-del { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--del); text-decoration: line-through; text-decoration-color: rgba(192,104,92,.55); opacity: .82; line-height: 1.6; }
+.se-leadfix .lf-arrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 9px 0 7px; }
+.se-leadfix .lf-add { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--accent); line-height: 1.6; font-weight: 500; }
+.se-leadfix .lf-badge { margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
+
+/* ── try/audit callout: make verification one glance away ─────────── */
+.se-try {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1px solid rgba(214,160,60,.4); border-radius: 10px;
+  background: rgba(214,160,60,.05); padding: 11px 15px; margin: 4px 0 20px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted);
+}
+.se-try .gold { color: var(--accent); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .se-fnode, .se-flink::after, .se-fnode.gate::after { animation: none; } }
 </style>
 """
@@ -414,6 +450,34 @@ def bubble(role_key: str, role_label: str, stance: str, message: str, refs: list
 def bar(value: int, max_value: int = 5) -> str:
     pct = max(0, min(100, round(value / max_value * 100)))
     return f'<div class="se-bar"><div style="width:{pct}%"></div></div>'
+
+
+def telemetry(meta: dict) -> str:
+    """Inference-trace strip. Shows REAL run telemetry (model, exact tokens,
+    duration, content-hash trace id) when the run came from a live model;
+    otherwise labels itself honestly as a scripted replay."""
+    kind = meta.get("kind", "")
+    model = meta.get("model", "")
+    u = meta.get("usage", {}) or {}
+    tin, tout = u.get("input_tokens", 0), u.get("output_tokens", 0)
+    dur = meta.get("duration_seconds", 0)
+    real = kind in ("live", "real-inference") and (tin + tout) > 0
+    if real:
+        tid = _hashlib.sha1(_json.dumps(meta, sort_keys=True).encode()).hexdigest()[:7]
+        return (
+            '<div class="se-telemetry"><span class="dot"></span>'
+            '<span class="lbl">real inference</span>'
+            f'<b class="gold">{esc(model)}</b><span class="sep">·</span>'
+            f'<span><b>{tin:,}</b> in / <b>{tout:,}</b> out tokens</span><span class="sep">·</span>'
+            f'<span><b>{dur}</b>s</span><span class="sep">·</span>'
+            f'<span>trace <b>{tid}</b></span></div>'
+        )
+    return (
+        '<div class="se-telemetry"><span class="lbl">replay</span>'
+        '<span>scripted · deterministic — every number below is reproducible</span>'
+        '<span class="sep">·</span>'
+        '<span class="gold">run live on your key for real inference →</span></div>'
+    )
 
 
 def flow_diagram(g1: int, g2: int, defects: int) -> str:

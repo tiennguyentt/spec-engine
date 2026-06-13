@@ -129,15 +129,22 @@ def render_hero(run: dict) -> None:
     p0_1 = sum(1 for f in g1["findings"] if f["priority"] == "P0")
     p0_2 = sum(1 for f in g2["findings"] if f["priority"] == "P0")
 
-    theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic)")
-    st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
-                unsafe_allow_html=True)
+    theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic case)")
+    # (1) proof it's a real model run — exact tokens/model/duration, or an honest "scripted" label
+    st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
+    # (2) the problem made visceral in one glance: a flawed spec line, struck out and corrected
+    am0 = arbiter["amendments"][0]
     st.markdown(
-        '<div class="se-flow-cap">Messy evidence in. A verified, signed spec out.</div>'
-        f'<p class="se-hero-sub">{len(arbiter["amendments"])} defects caught with receipts — '
-        "before a human signs off.</p>",
+        '<div class="se-leadfix"><div class="lf-k">one defect — struck out, corrected, receipted</div>'
+        f'<div class="lf-del">{esc(am0["before"])}</div>'
+        '<div class="lf-arrow">↓ corrected</div>'
+        f'<div class="lf-add">{esc(am0["after"])}</div>'
+        f'<div class="lf-badge">caught by gate + debate · {esc(", ".join(am0["finding_ids"]))} · '
+        "every term traces to evidence ↓</div></div>",
         unsafe_allow_html=True,
     )
+    st.markdown('<div class="se-flow-cap">Messy evidence in. A verified, signed spec out.</div>',
+                unsafe_allow_html=True)
     st.markdown(
         '<div class="se-stats">'
         + stat(f'<span class="from">{g1["overall_score"]} →</span> '
@@ -150,6 +157,17 @@ def render_hero(run: dict) -> None:
         + "</div>",
         unsafe_allow_html=True,
     )
+    # (3) make "try + audit" obvious without scrolling
+    st.markdown(
+        '<div class="se-try"><span class="gold">▶ Try it yourself</span> — paste an OpenRouter key '
+        "in the sidebar (free models work, costs pennies) and watch the real red team run on your "
+        "own evidence. Or open any receipt below to audit a claim against its source.</div>",
+        unsafe_allow_html=True,
+    )
+    # the pipeline, demoted to "how it runs"
+    st.markdown('<div class="se-trace" style="margin:18px 0 -4px">how it runs</div>', unsafe_allow_html=True)
+    st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
+                unsafe_allow_html=True)
 
 
     # ---- catch 1: the evidence conflict ------------------------------------
@@ -171,7 +189,7 @@ def render_hero(run: dict) -> None:
             + "</div>"
         )
         st.markdown(f'<div class="se-catch">{summary}</div>', unsafe_allow_html=True)
-        with st.expander("view receipt — both sources, verbatim"):
+        with st.expander("view receipt — both sources, verbatim", expanded=True):
             st.markdown(inner + f'<div class="se-body" style="margin-top:8px">{esc(c1["resolution"])}</div>', unsafe_allow_html=True)
 
     # ---- catch 2: the invented regulation ----------------------------------
