@@ -160,7 +160,7 @@ def _reasoning_steps(run: dict) -> list[dict]:
     steps: list[dict] = []
     files = run["meta"].get("evidence_files", [])
     if files:
-        steps.append({"k": "scan", "t": f'scanning <b>{len(files)}</b> evidence sources — transcripts · policy · code · DB'})
+        steps.append({"k": "scan", "t": f'scanning <b>{len(files)}</b> evidence sources: transcripts · policy · code · DB'})
     confs = s["conflicts"]["conflicts"]
     # lead with the sharpest contradiction: spec-vs-code, else one needing a human
     conf = (next((c for c in confs if c["kind"] == "artifact-state-gap"), None)
@@ -179,7 +179,7 @@ def _reasoning_steps(run: dict) -> list[dict]:
     hits = s["gate"]["hits"]
     gh = next((h for h in hits if h["rule_id"] in ("G7", "G8")), None) or (hits[0] if hits else None)
     if gh:
-        steps.append({"k": "gate", "t": f'code gate — <b>{esc(gh["rule_id"])}</b> {esc(_clip(gh.get("message", ""), 80))}'})
+        steps.append({"k": "gate", "t": f'code gate · <b>{esc(gh["rule_id"])}</b> {esc(_clip(gh.get("message", ""), 80))}'})
     # a real line of the model's debate reasoning
     turns = s["debate"]["turns"]
     dturn = (next((t for t in turns if t.get("message") and ("48" in t["message"] or "must" in t["message"].lower())), None)
@@ -188,10 +188,10 @@ def _reasoning_steps(run: dict) -> list[dict]:
         steps.append({"k": "debate", "t": f'<b>{esc(team.role_label(dturn["role"]))}</b>: {esc(_clip(dturn["message"], 120))}'})
     if conf:
         steps.append({"k": "resolve",
-                      "t": f'resolved — <b>{esc(conf.get("winning_authority", ""))}</b> wins · {esc(_clip(conf["resolution"], 80))}'})
+                      "t": f'resolved · <b>{esc(conf.get("winning_authority", ""))}</b> wins · {esc(_clip(conf["resolution"], 80))}'})
     ams = s["debate"]["arbiter"]["amendments"]
     if ams:
-        steps.append({"k": "fix", "t": f'corrected — “{esc(_clip(ams[0]["after"], 104))}”'})
+        steps.append({"k": "fix", "t": f'corrected: “{esc(_clip(ams[0]["after"], 104))}”'})
     return steps
 
 
@@ -226,10 +226,10 @@ def render_hero(run: dict) -> None:
     # ~5-min path and lives at the very bottom — it never gates the experience.
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
     st.markdown(
-        '<div class="se-flow-cap">An “approved” insurance spec — and the defects hiding in it.</div>'
-        '<p class="se-hero-sub">A recorded model run, shown instantly (no waiting). '
-        "Don't take the label's word — <b>download the raw run</b> (top) to inspect every model call, "
-        "prompt and token, or run your own live (bottom). Below: how it reasoned, with receipts.</p>",
+        '<div class="se-flow-cap">This insurance spec looked approved. A real model caught the defects.</div>'
+        '<p class="se-hero-sub">It loads instantly because this run is recorded. Want to check it is real? '
+        "<b>Download the full run</b> up top and read every model call and token, or run your own live at the "
+        "bottom. Then watch it reason below and open any receipt.</p>",
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -255,9 +255,9 @@ def render_hero(run: dict) -> None:
     turns = s["debate"]["turns"]
     if turns:
         st.markdown(
-            '<p class="se-hero-sub" style="margin-top:6px">↑ a derived map. ↓ the <b>model\'s own</b> '
-            "reasoning — watch it think in real time (a fast replay of the real run), or read it verbatim. "
-            "No canned demo reasons like this.</p>",
+            '<p class="se-hero-sub" style="margin-top:6px">The diagram above is our summary. The '
+            "<b>model's own</b> reasoning is right below. Watch it think in real time (a fast replay of "
+            "the real run), or read it word for word. No scripted demo reasons like this.</p>",
             unsafe_allow_html=True,
         )
         if st.button(":material/play_arrow: Watch it reason in real time", key="watch_reason",
@@ -280,7 +280,7 @@ def render_hero(run: dict) -> None:
     # ---- catch 1: a stakeholder conflict resolved by authority --------------
     c1 = next((c for c in s["conflicts"]["conflicts"] if c["kind"] == "business-rule"), None)
     if c1:
-        theme.section("catch 01", "A stakeholder conflict — resolved by authority, flagged for a human",
+        theme.section("catch 01", "A stakeholder conflict, resolved by authority and flagged for a human",
                       "truth-hierarchy")
         win = find_claim(run, c1["winning_claim_id"])
         lose_id = next((cid for cid in c1["claim_ids"] if cid != c1["winning_claim_id"]), "")
@@ -328,7 +328,7 @@ def render_hero(run: dict) -> None:
     # ---- catch 3: spec vs the artifacts (code/DB) ---------------------------
     c2 = next((c for c in s["conflicts"]["conflicts"] if c["kind"] == "artifact-state-gap"), None)
     if c2:
-        theme.section("catch 03", "Spec says one thing — the code and data say another", "artifact-state gap")
+        theme.section("catch 03", "Spec says one thing, the code and data say another", "artifact-state gap")
         intended = find_claim(run, c2["winning_claim_id"])
         artifacts = [find_claim(run, cid) for cid in c2["claim_ids"]]
         artifacts = [a for a in artifacts if a and a.get("claim_class") == "artifact-state"]
