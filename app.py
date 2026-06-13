@@ -214,9 +214,12 @@ def render_hero(run: dict) -> None:
         _left = sponsored.remaining_runs()
         with st.expander(f"▶ Run it live yourself — real model, ~5 min · no key  ({_left} free)", expanded=False):
             st.caption("Optional. Everything below is already a **real recorded run** (instant). "
-                       "A live run streams a fresh one end-to-end — it takes ~5 minutes and you can Stop anytime.")
+                       "A live run streams a fresh one end-to-end (~5 min, OpenRouter credits, Stop anytime).")
             st.selectbox("Model", SPON_MODELS, key="spon_model", accept_new_options=True,
                          help="deepseek-chat is fastest; Kimi is a good alt; V4 is stronger but slower. Type any OpenRouter id.")
+            st.caption("⚠ Picking a model here changes **nothing on screen** until you press Start — the "
+                       "view below is a fixed recorded deepseek-chat run. Switching the *shown* model "
+                       "(instant compare) needs a recorded run per model.")
             if st.button("▶ Start the ~5-min live run", key="hero_live",
                          disabled=_left <= 0, use_container_width=True):
                 st.session_state["_trigger_sponsored"] = True
@@ -1429,7 +1432,13 @@ def render_live(sponsored_run: bool = False) -> None:
     except Exception as err:  # surface provider errors readably
         if sponsored_run:
             sponsored.release_slot()
-        st.error(f"Run failed: {err}")
+        _m = str(err)
+        if "402" in _m or "credit" in _m.lower() or "more credits" in _m.lower():
+            st.error("Live run unavailable — the OpenRouter key is **out of credits**. "
+                     "Top up at openrouter.ai/settings/credits. The recorded run (← Back) is "
+                     "fully available and is itself a real model run.")
+        else:
+            st.error(f"Run failed: {err}")
         st.stop()
 
     if sponsored_run:
