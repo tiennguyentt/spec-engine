@@ -50,9 +50,23 @@ with st.sidebar:
 
     st.divider()
     st.header("Run live")
-    with st.expander("on your own evidence pack", expanded=True):
+    # PRIMARY try-path: sponsored inference on a server-side key — no key needed,
+    # capped. The visitor never has to create or paste a key to see the real thing.
+    if sponsored.available():
+        _left = sponsored.remaining_runs()
+        run_sponsored = st.button(":material/bolt: Run it live — on us", type="primary",
+                                  disabled=_left <= 0, use_container_width=True)
+        st.caption(f"real model inference · **no key needed** · {_left} free runs left today"
+                   if _left > 0 else "today's free live runs are used up — use your own key below, or come back tomorrow")
+    else:
+        run_sponsored = False
+
+    # EDGE CASE: bring your own key — only for running your OWN private evidence.
+    with st.expander("Run on your own evidence (your key, private)", expanded=False):
+        st.caption("For your own spec/evidence. Your key is used only for this session's "
+                   "calls — never stored, never committed. Leave the pack empty to run the AnDigi case.")
         base_url = st.text_input("API base URL", value=DEFAULT_BASE_URL)
-        api_key = st.text_input("API key", type="password", help="Never stored. OpenRouter keys start with sk-or-.")
+        api_key = st.text_input("API key", type="password", help="OpenRouter keys start with sk-or-. Never stored.")
         model = st.selectbox("Model", SUGGESTED_MODELS, accept_new_options=True)
         byo_files = st.file_uploader(
             "Your evidence pack (optional)", accept_multiple_files=True,
@@ -64,7 +78,7 @@ with st.sidebar:
         st.download_button("draft-spec.json template",
                            (DATA_DIR / "andigi" / "draft-spec.json").read_text(encoding="utf-8"),
                            "draft-spec.json", use_container_width=True)
-        run_live = st.button(":material/play_arrow: Run the red team", type="primary", disabled=not api_key, use_container_width=True)
+        run_live = st.button(":material/play_arrow: Run on my key", disabled=not api_key, use_container_width=True)
         st.caption("Hard budget 150k tokens, live burn shown. Cheap models work: every call is "
                    "schema-validated with retries. Uploaded files stay in this session only — "
                    "never stored server-side, never committed.")
@@ -204,9 +218,9 @@ def render_hero(run: dict) -> None:
     )
     # (3) make "try + audit" obvious without scrolling
     st.markdown(
-        '<div class="se-try"><span class="gold">▶ Try it yourself</span> — paste an OpenRouter key '
-        "in the sidebar (free models work, costs pennies) and watch the real red team run on your "
-        "own evidence. Or open any receipt below to audit a claim against its source.</div>",
+        '<div class="se-try"><span class="gold">▶ Try it live — on us</span> — hit “Run it live” in '
+        "the sidebar to watch the real red team run on a live model (no key needed). Or open any "
+        "receipt below to audit a claim against its source.</div>",
         unsafe_allow_html=True,
     )
     # the pipeline, demoted to "how it runs"
@@ -1292,34 +1306,42 @@ def render_how(run: dict) -> None:
 
 
 # ---------------------------------------------------------------- live mode
-def render_live() -> None:
+def render_live(sponsored_run: bool = False) -> None:
     evidence_dir = DATA_DIR / "andigi"
-    byo = bool(byo_files)
-    if byo:
-        names = [f.name for f in byo_files]
-        has_spec = "draft-spec.json" in names
-        if len(names) - (1 if has_spec else 0) < 1:
-            st.error("Upload at least one evidence file — a transcript, doc, code or schema "
-                     "(.md/.txt is enough).")
-            st.stop()
-        import tempfile
-        evidence_dir = Path(tempfile.mkdtemp(prefix="ke-byo-"))
-        for f in byo_files:
-            (evidence_dir / Path(f.name).name).write_bytes(f.getvalue())
-        if has_spec:
-            try:
-                DraftSpec.model_validate_json((evidence_dir / "draft-spec.json").read_text(encoding="utf-8"))
-            except Exception as err:
-                st.error(f"draft-spec.json does not match the schema: {err}")
+    byo = False
+    if sponsored_run:
+        # routing has verified availability/cap and is holding the slot; we run
+        # on the server-side key (capped budget) and release the slot when done.
+        eff_key, eff_model = sponsored.key(), sponsored.SPONSORED_MODEL
+        eff_base, eff_budget = DEFAULT_BASE_URL, sponsored.PER_RUN_TOKEN_BUDGET
+    else:
+        eff_key, eff_model, eff_base, eff_budget = api_key, model, base_url, 0
+        byo = bool(byo_files)
+        if byo:
+            names = [f.name for f in byo_files]
+            has_spec = "draft-spec.json" in names
+            if len(names) - (1 if has_spec else 0) < 1:
+                st.error("Upload at least one evidence file — a transcript, doc, code or schema "
+                         "(.md/.txt is enough).")
                 st.stop()
-            st.info(f"BYO evidence pack: {len(names) - 1} evidence files + your draft spec · "
-                    "processed in this session only")
-        else:
-            st.info(f"BYO evidence pack: {len(names)} evidence files, no draft spec — the engine "
-                    "will draft a spec from your evidence first, then red-team its own draft · "
-                    "processed in this session only")
+            import tempfile
+            evidence_dir = Path(tempfile.mkdtemp(prefix="ke-byo-"))
+            for f in byo_files:
+                (evidence_dir / Path(f.name).name).write_bytes(f.getvalue())
+            if has_spec:
+                try:
+                    DraftSpec.model_validate_json((evidence_dir / "draft-spec.json").read_text(encoding="utf-8"))
+                except Exception as err:
+                    st.error(f"draft-spec.json does not match the schema: {err}")
+                    st.stop()
+                st.info(f"BYO evidence pack: {len(names) - 1} evidence files + your draft spec · "
+                        "processed in this session only")
+            else:
+                st.info(f"BYO evidence pack: {len(names)} evidence files, no draft spec — the engine "
+                        "will draft a spec from your evidence first, then red-team its own draft · "
+                        "processed in this session only")
 
-    llm = LLM(api_key=api_key, model=model, base_url=base_url)
+    llm = LLM(api_key=eff_key, model=eff_model, base_url=eff_base, token_budget=eff_budget)
 
     # live run streams in the same chat-terminal layout as the replay
     col_chat, col_rail = st.columns([2.6, 1.05], gap="large")
@@ -1330,9 +1352,10 @@ def render_live() -> None:
         st.markdown('<div class="se-rail-title" style="margin-top:14px">execution</div>', unsafe_allow_html=True)
         odo_ph = st.empty()
         st.markdown('<p class="se-trace" style="margin-top:10px">LIVE MODEL RUN · real tokens · '
-                    f'{esc(model)}</p>', unsafe_allow_html=True)
+                    f'{esc(eff_model)}{" · on us" if sponsored_run else ""}</p>', unsafe_allow_html=True)
     with col_chat:
-        st.markdown('<p class="se-sysmsg">— live run · the full roster is working on your evidence —</p>',
+        _whose = "the AnDigi case — free, on us" if sponsored_run else "your evidence"
+        st.markdown(f'<p class="se-sysmsg">— live run · the full roster is working on {_whose} —</p>',
                     unsafe_allow_html=True)
         status_area = st.container()
         stream_area = st.container()
@@ -1386,9 +1409,15 @@ def render_live() -> None:
     try:
         run = run_pipeline(llm, on_progress, on_event, on_text, evidence_dir=evidence_dir)
     except Exception as err:  # surface provider errors readably
+        if sponsored_run:
+            sponsored.release_slot()
         st.error(f"Run failed: {err}")
         st.stop()
 
+    if sponsored_run:
+        sponsored.record_run(llm.usage.total)
+        sponsored.release_slot()
+        run["meta"]["evidence_pack"] = "sponsored"
     if byo:
         run["meta"]["evidence_pack"] = "byo"
     import time as _time
@@ -1407,8 +1436,23 @@ def render_live() -> None:
 
 
 # ---------------------------------------------------------------- routing
-if run_live and api_key:
+# Sponsored guards live here so a busy/capped slot falls through to the recorded
+# run instead of blanking the page. render_live(sponsored_run=True) assumes the
+# slot is held and releases it.
+_live_started = False
+if run_sponsored:
+    if sponsored.available() and sponsored.remaining_runs() > 0 and sponsored.acquire_slot():
+        render_live(sponsored_run=True)
+        _live_started = True
+    else:
+        st.warning("Free live runs are busy or used up right now — here's a recorded run instead. "
+                   "Try again in a moment, or use your own key.")
+elif run_live and api_key:
     render_live()
+    _live_started = True
+
+if _live_started:
+    pass
 elif chosen:
     _run = st.session_state.get("active_run")
     if st.session_state.get("active_run_name") != str(chosen):
