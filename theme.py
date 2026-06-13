@@ -1,7 +1,7 @@
 """Portfolio-matched theme for Streamlit apps.
 
 Single-file, reusable: drop `theme.py` + `.streamlit/config.toml` into any
-Streamlit app to get the "Forensic Ledger" design language — warm near-black
+Streamlit app to get the "Forensic Ledger" design language, warm near-black
 ink, signal-gold accent, Schibsted Grotesk (display + body),
 JetBrains Mono data, git-diff details. Call `theme.inject()` once at the top,
 then build blocks with the helpers below (they return HTML strings; pass
@@ -140,7 +140,7 @@ h1, h2, h3 {
   html, body, [data-testid="stAppViewContainer"] { overflow-x: hidden; }
   /* keep wide mono content (telemetry, reasoning) from forcing a sideways scroll */
   .se-telemetry, .se-reason, .se-leadfix { overflow-wrap: anywhere; }
-  /* Streamlit has no hamburger — it opens the sidebar via a tiny chevron. Turn
+  /* Streamlit has no hamburger, it opens the sidebar via a tiny chevron. Turn
      that control into an obvious gold menu button on mobile so the (optional)
      advanced panel is discoverable. Multiple testids = robust across versions;
      if none match it simply no-ops. */
@@ -173,7 +173,7 @@ h1, h2, h3 {
 
 /* gate scanline: one sweep over the code-enforced chips */
 .se-gatescan { position: relative; overflow: hidden; border-radius: 8px; }
-/* gate-scan sweep removed — no colored animations in the status layer */
+/* gate-scan sweep removed, no colored animations in the status layer */
 
 @media (prefers-reduced-motion: reduce) {
   .se-card, .se-catch, .se-turn, .se-stat, .se-spechead { animation: none; }
@@ -334,7 +334,7 @@ h1, h2, h3 {
 .se-turn .tround { color: var(--dim); margin-left: auto; }
 .se-turn .tmsg { color: #CDCAC0; font-size: 14.5px; line-height: 1.7; margin-top: 10px; }
 
-/* Material Symbols Rounded — the icon set. Use via theme.micon() in custom
+/* Material Symbols Rounded, the icon set. Use via theme.micon() in custom
    HTML, or `:material/name:` directly in Streamlit component labels. */
 .ms {
   font-family: 'Material Symbols Rounded';
@@ -500,7 +500,7 @@ def bar(value: int, max_value: int = 5) -> str:
 
 
 def reasoning_trace(steps: list[dict], model: str = "") -> str:
-    """Replay the run's actual logic as an animated, step-by-step trace —
+    """Replay the run's actual logic as an animated, step-by-step trace ·
     evidence → grounding → contradiction → gate → debate → resolution → fix.
     Each step's `t` is pre-built HTML; `k` selects the marker/styling."""
     icon = {"scan": "search", "ground": "link", "conflict": "warning",
@@ -533,7 +533,7 @@ def telemetry(meta: dict) -> str:
     real = kind in ("live", "real-inference") and (tin + tout) > 0
     if real:
         tid = _hashlib.sha1(_json.dumps(meta, sort_keys=True).encode()).hexdigest()[:7]
-        # No "real inference" claim — words don't prove anything. Just the
+        # No "real inference" claim, words don't prove anything. Just the
         # checkable facts (model, exact tokens, duration, content-hash trace);
         # the page tells the viewer to verify by downloading the raw run.
         return (
@@ -546,14 +546,14 @@ def telemetry(meta: dict) -> str:
         )
     return (
         '<div class="se-telemetry"><span class="lbl">replay</span>'
-        '<span>scripted · deterministic — every number is reproducible</span>'
+        '<span>scripted · deterministic, every number is reproducible</span>'
         '<span class="sep">·</span>'
         '<span class="gold">run live on your key to see model inference →</span></div>'
     )
 
 
 def flow_diagram(g1: int, g2: int, defects: int) -> str:
-    """The pipeline as an animated vertical data-flow timeline — gold data flows
+    """The pipeline as an animated vertical data-flow timeline, gold data flows
     down the path; the code gate and the signed spec light up. Not boxes."""
     nodes = [
         ("", "evidence", "Messy in", "transcripts · policy · code · DB"),
@@ -620,7 +620,7 @@ CHAT_CSS = """
 .se-strip .exec { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--dim); }
 .se-strip .exec b { color: var(--ink); animation: seTick .16s ease; display: inline-block; }
 
-/* the case brief shown before play — what feature is being red-teamed */
+/* the case brief shown before play, what feature is being red-teamed */
 .se-casebrief {
   border: 1px solid var(--line); border-radius: 16px; background: rgba(15,17,19,.6);
   padding: 18px 22px; margin: 8px 0 18px; max-width: 70ch;
@@ -636,7 +636,7 @@ CHAT_CSS = """
   color: var(--ink); font-size: 14.5px; line-height: 1.65;
 }
 
-/* bottom input as a rounded pill — flatten Streamlit's nested baseweb
+/* bottom input as a rounded pill, flatten Streamlit's nested baseweb
    layers, whose own opaque background and border otherwise paint over the
    pill border (border appears "under" the background) */
 [data-testid="stChatInput"] {

@@ -1,8 +1,8 @@
-"""Knowledge Engine — an evidence-backed spec red team.
+"""Knowledge Engine, an evidence-backed spec red team.
 
 Default view: the hero catch. A cold viewer lands on the defects the agent
-team caught in an approved-looking insurance spec — with verbatim receipts,
-the corrected diff, and the readiness delta — within seconds, no key, no
+team caught in an approved-looking insurance spec, with verbatim receipts,
+the corrected diff, and the readiness delta, within seconds, no key, no
 mode choice. The full machinery (gate, D1-D5 grading, phase-gated debate,
 eval-log) is inspectable depth behind expanders.
 
@@ -50,22 +50,22 @@ with st.sidebar:
 
     st.divider()
     st.header("Run live")
-    # The PRIMARY "Run it live — on us" control lives in the MAIN column (see
+    # The PRIMARY "Run it live, on us" control lives in the MAIN column (see
     # render_hero) so it's reachable on mobile without opening this sidebar.
     st.caption("The live run lives on the main screen (bottom of the report). "
                "The option below is only for your own private evidence + key.")
 
-    # EDGE CASE: bring your own key — only for running your OWN private evidence.
+    # EDGE CASE: bring your own key, only for running your OWN private evidence.
     with st.expander("Run on your own evidence (your key, private)", expanded=False):
         st.caption("For your own spec/evidence. Your key is used only for this session's "
-                   "calls — never stored, never committed. Leave the pack empty to run the AnDigi case.")
+                   "calls, never stored, never committed. Leave the pack empty to run the AnDigi case.")
         base_url = st.text_input("API base URL", value=DEFAULT_BASE_URL)
         api_key = st.text_input("API key", type="password", help="OpenRouter keys start with sk-or-. Never stored.")
         model = st.selectbox("Model", SUGGESTED_MODELS, accept_new_options=True)
         byo_files = st.file_uploader(
             "Your evidence pack (optional)", accept_multiple_files=True,
             type=["md", "txt", "sql", "py", "json"],
-            help="Transcripts/docs (.md .txt) are enough — code (.py .txt) and schema (.sql) add depth. "
+            help="Transcripts/docs (.md .txt) are enough, code (.py .txt) and schema (.sql) add depth. "
                  "Optionally include a draft-spec.json to red-team your own spec; without one, the engine "
                  "drafts a spec from your evidence first. Leave empty to run the AnDigi pack.",
         )
@@ -74,7 +74,7 @@ with st.sidebar:
                            "draft-spec.json", use_container_width=True)
         run_live = st.button(":material/play_arrow: Run on my key", disabled=not api_key, use_container_width=True)
         st.caption("Hard budget 150k tokens, live burn shown. Cheap models work: every call is "
-                   "schema-validated with retries. Uploaded files stay in this session only — "
+                   "schema-validated with retries. Uploaded files stay in this session only, "
                    "never stored server-side, never committed.")
 
     st.divider()
@@ -82,17 +82,17 @@ with st.sidebar:
     st.markdown(
         "A public, fully synthetic rebuild of the PM intelligence system I "
         "operate at work. The case: **AnDigi**, an agent-operated insurance "
-        "app. Every defect shown was planted in the evidence pack — and "
+        "app. Every defect shown was planted in the evidence pack, and "
         "caught by the machinery, not by hand."
     )
     st.markdown(
-        "Built by **Tien Nguyen** — AI-native Product Manager · "
+        "Built by **Tien Nguyen**, AI-native Product Manager · "
         "[tiennguyentt.github.io](https://tiennguyentt.github.io/)"
     )
 
 
 # Models offered for the no-key live run (verified OpenRouter ids). Default is
-# deepseek-chat — fastest/most reliable inside the ~5-min capped run. Kimi is a
+# deepseek-chat, fastest/most reliable inside the ~5-min capped run. Kimi is a
 # solid alt. V4 is stronger but SLOWER (often won't finish in the cap). Free-text
 # entry allows any other id.
 SPON_MODELS = ["deepseek/deepseek-chat", "moonshotai/kimi-k2",
@@ -116,7 +116,7 @@ def work_notes_html(wn: dict) -> str:
     return (
         '<div class="se-notes">'
         f'<b>observation</b> {esc(wn["observation"])}<br>'
-        f'<b>evidence</b> {esc(", ".join(wn["evidence_refs"]) or "—")} · '
+        f'<b>evidence</b> {esc(", ".join(wn["evidence_refs"]) or "·")} · '
         f'<b>confidence</b> {esc(wn["confidence"])}<br>'
         f'<b>risk</b> {esc(wn["risk"])}<br>'
         + (f'<b>proposed</b> {esc(wn["proposed_change"])}<br>' if wn["proposed_change"] else "")
@@ -154,7 +154,7 @@ def _clip(text: str, n: int = 110) -> str:
 
 
 def _reasoning_steps(run: dict) -> list[dict]:
-    """Build the run's real logic chain — every step derived from the run data,
+    """Build the run's real logic chain, every step derived from the run data,
     so the hero shows how the model actually reasoned, not a staged script."""
     s = run["stages"]
     steps: list[dict] = []
@@ -197,7 +197,7 @@ def _reasoning_steps(run: dict) -> list[dict]:
 
 def _reason_gen(turns: list[dict]):
     """Stream the recorded reasoning word-by-word so it reads as the model
-    thinking in real time — a fast replay of the real run (not live inference)."""
+    thinking in real time, a fast replay of the real run (not live inference)."""
     for t in turns:
         yield f"\n\n**{team.role_label(t['role'])}** · _{t.get('stance', '')}_\n\n"
         for w in (t.get("message", "") or "").split():
@@ -223,7 +223,7 @@ def render_hero(run: dict) -> None:
     theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic case)")
     # The 3-second catch, all instant (no waiting): (1) proof it's a REAL model
     # run, (2) one bold line of what it did, (3) the result. A live run is the
-    # ~5-min path and lives at the very bottom — it never gates the experience.
+    # ~5-min path and lives at the very bottom, it never gates the experience.
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
     st.markdown(
         '<div class="se-flow-cap">This insurance spec looked approved. A real model caught the defects.</div>'
@@ -263,7 +263,7 @@ def render_hero(run: dict) -> None:
         if st.button(":material/play_arrow: Watch it reason in real time", key="watch_reason",
                      use_container_width=True):
             st.write_stream(_reason_gen(turns))
-        with st.expander(f"or read it verbatim — {len(turns)} agent turns + work-notes",
+        with st.expander(f"or read it verbatim, {len(turns)} agent turns + work-notes",
                          expanded=False, icon=":material/notes:"):
             for _t in turns:
                 st.markdown(turn_html(_t, show_notes=True), unsafe_allow_html=True)
@@ -273,7 +273,7 @@ def render_hero(run: dict) -> None:
                 unsafe_allow_html=True)
 
 
-    # Catch titles are DATA-DRIVEN — derived from the run itself — so this view
+    # Catch titles are DATA-DRIVEN, derived from the run itself, so this view
     # works on any run (curated replay or a messy real-model run), not just the
     # scripted case. Generic section frames; the card copy comes from the data.
 
@@ -287,9 +287,9 @@ def render_hero(run: dict) -> None:
         lose = find_claim(run, lose_id)
         inner = ""
         if win and win.get("sources"):
-            inner += f'<div class="se-vs">WINS BY AUTHORITY — {esc(win["authority"])}</div>' + source_quote_html(win["sources"][0])
+            inner += f'<div class="se-vs">WINS BY AUTHORITY, {esc(win["authority"])}</div>' + source_quote_html(win["sources"][0])
         if lose and lose.get("sources"):
-            inner += f'<div class="se-vs">LOSES — BUT AUDITORS READ THIS ({esc(lose["authority"])})</div>' + source_quote_html(lose["sources"][0])
+            inner += f'<div class="se-vs">LOSES, BUT AUDITORS READ THIS ({esc(lose["authority"])})</div>' + source_quote_html(lose["sources"][0])
         summary = (
             f'<div class="chead"><span class="cnum">{esc(c1["id"])}</span>'
             f'<span class="ctitle">{esc(c1["description"])}</span>'
@@ -297,7 +297,7 @@ def render_hero(run: dict) -> None:
             + "</div>"
         )
         st.markdown(f'<div class="se-catch">{summary}</div>', unsafe_allow_html=True)
-        with st.expander("view receipt — both sources, verbatim", expanded=True):
+        with st.expander("view receipt, both sources, verbatim", expanded=True):
             st.markdown(inner + f'<div class="se-body" style="margin-top:8px">{esc(c1["resolution"])}</div>', unsafe_allow_html=True)
 
     # ---- catch 2: the strongest grounding finding the grader caught ---------
@@ -315,7 +315,7 @@ def render_hero(run: dict) -> None:
             f'<span class="ctitle">{esc(f1["description"])}</span>{summon}</div></div>',
             unsafe_allow_html=True,
         )
-        with st.expander("view receipt — finding, violation, and the evidence it rests on"):
+        with st.expander("view receipt, finding, violation, and the evidence it rests on"):
             inner = f'<div class="se-body">{esc(f1["suggested_fix"])}</div>' if f1.get("suggested_fix") else ""
             if f1.get("claim_class_violation"):
                 inner += f'<div class="se-trace">claim-class violation: {esc(f1["claim_class_violation"])} · requirement {esc(f1["requirement_id"])}</div>'
@@ -342,12 +342,12 @@ def render_hero(run: dict) -> None:
             f'<span class="ctitle">{esc(c2["description"])}</span>{chip}</div></div>',
             unsafe_allow_html=True,
         )
-        with st.expander("view receipt — intended vs artifact state"):
+        with st.expander("view receipt, intended vs artifact state"):
             inner = ""
             if intended and intended.get("sources"):
                 inner += f'<div class="se-vs">THE INTENDED BEHAVIOR ({esc(intended["authority"])})</div>' + source_quote_html(intended["sources"][0])
             for a in artifacts:
-                inner += '<div class="se-vs">WHAT THE SYSTEM ACTUALLY DOES (artifact state — cannot be out-talked)</div>' + source_quote_html(a["sources"][0])
+                inner += '<div class="se-vs">WHAT THE SYSTEM ACTUALLY DOES (artifact state, cannot be out-talked)</div>' + source_quote_html(a["sources"][0])
             inner += f'<div class="se-body" style="margin-top:8px">{esc(c2["resolution"])}</div>'
             st.markdown(inner, unsafe_allow_html=True)
 
@@ -359,7 +359,7 @@ def render_hero(run: dict) -> None:
         hits_html = "".join(
             f'<div class="se-gatehit"><span class="{ "rid" if h["severity"] == "error" else "warn" }">'
             f'{esc(h["rule_id"])} {esc(h["severity"])}</span> · {esc(h["requirement_id"])} · '
-            f'{esc(h["message"])} — <i>“{esc(h["excerpt"][:90])}”</i></div>'
+            f'{esc(h["message"])}, <i>“{esc(h["excerpt"][:90])}”</i></div>'
             for h in gate1["hits"]
         )
         st.markdown(hits_html + '<div class="se-trace" style="margin-top:8px">deterministic regex/structural checks · gate version '
@@ -378,7 +378,7 @@ def render_hero(run: dict) -> None:
     if arbiter["amendments"]:
         _am_card(arbiter["amendments"][0])
     strip = " · ".join(f'{am["requirement_id"]}' for am in arbiter["amendments"][1:])
-    with st.expander(f"all corrected diffs — {strip} + new requirements"):
+    with st.expander(f"all corrected diffs, {strip} + new requirements"):
         for am in arbiter["amendments"][1:]:
             _am_card(am)
         for nr in arbiter["new_requirements"]:
@@ -400,7 +400,7 @@ def render_hero(run: dict) -> None:
     if ev:
         theme.section("the eval", "Detection recall on the planted-defect benchmark",
                       f'{ev["caught"]}/{ev["total"]} caught · recall {ev["recall"]:.0%}')
-        with st.expander("per-defect scorecard — what was caught, and through which channel"):
+        with st.expander("per-defect scorecard, what was caught, and through which channel"):
             rows = "".join(
                 f'<div class="se-gatehit"><span class="{"rid" if d["caught"] else "warn"}" '
                 f'style="color:{"#8E9A92" if d["caught"] else "#C0685C"}">'
@@ -415,15 +415,15 @@ def render_hero(run: dict) -> None:
     # ---- depth ----------------------------------------------------------------
     st.write("")
     theme.section("depth", "For the technical reviewer", "")
-    with st.expander("Inspect the full run — gate, D1-D5 grading, 11-role debate, evidence", icon=":material/frame_inspect:"):
+    with st.expander("Inspect the full run, gate, D1-D5 grading, 11-role debate, evidence", icon=":material/frame_inspect:"):
         render_trace(run)
-    with st.expander("How it works — architecture, budget, eval-log", icon=":material/settings:"):
+    with st.expander("How it works, architecture, budget, eval-log", icon=":material/settings:"):
         render_how(run)
-    with st.expander("Standards alignment — INCOSE characteristics & EARS patterns", icon=":material/architecture:"):
+    with st.expander("Standards alignment, INCOSE characteristics & EARS patterns", icon=":material/architecture:"):
         st.markdown(
             '<p class="se-body">What the gate and rubric enforce, read in the vocabulary an '
             "enterprise reviewer audits against. The mapping is ours, at the characteristic "
-            "level — a reading aid, not a certification.</p>",
+            "level, a reading aid, not a certification.</p>",
             unsafe_allow_html=True,
         )
         gate_rows = "".join(
@@ -452,14 +452,14 @@ def render_hero(run: dict) -> None:
         )
 
     # ---- optional, at the very bottom: run a fresh one live (the ~5-min path).
-    # It never gates the experience — everything above is already a real run.
+    # It never gates the experience, everything above is already a real run.
     if sponsored.available():
         _left = sponsored.remaining_runs()
         st.write("")
         theme.section("optional", "Run a fresh one live, yourself", "~5 min · no key")
         with st.expander(f"Start a live run on a real model  ({_left} free today)", expanded=False, icon=":material/play_arrow:"):
             st.caption("Optional and slow. Everything above is already a **real recorded run** that loaded "
-                       "instantly — this just streams a brand-new one end-to-end (~5 min, uses OpenRouter "
+                       "instantly, this just streams a brand-new one end-to-end (~5 min, uses OpenRouter "
                        "credits, Stop anytime). Picking a model only affects the run you start here.")
             st.selectbox("Model", SPON_MODELS, key="spon_model", accept_new_options=True,
                          help="deepseek-chat is fastest; Kimi is a good alt; V4 is stronger but slower. Type any OpenRouter id.")
@@ -473,7 +473,7 @@ def render_hero(run: dict) -> None:
 # ---------------------------------------------------------------- playback
 def render_playback(run: dict, chars_per_sec: int) -> None:
     """Recorded-sequence playback: only agent messages stream; artifacts snap.
-    Honest by construction — the label never claims live inference."""
+    Honest by construction, the label never claims live inference."""
     s = run["stages"]
     st.markdown(
         '<div class="se-flag" style="display:block">RECORDED REPLAY · deterministic scripted run · '
@@ -507,7 +507,7 @@ def render_playback(run: dict, chars_per_sec: int) -> None:
                 ph.markdown(turn_html(ev, show_notes=True), unsafe_allow_html=True)
                 time.sleep(0.3)
             elif ev["type"] == "router" and ev.get("close_phase"):
-                pane.markdown(f'<div class="se-noobj">net movement — {esc(ev["net_movement"])}</div>', unsafe_allow_html=True)
+                pane.markdown(f'<div class="se-noobj">net movement, {esc(ev["net_movement"])}</div>', unsafe_allow_html=True)
                 time.sleep(0.5)
     pane.markdown(f'<div class="se-card"><div class="se-body">{esc(s["debate"]["arbiter"]["summary"])}</div>'
                   '<div class="se-trace">arbiter ruling assembled · playback complete</div></div>',
@@ -524,19 +524,19 @@ def render_shipped_feature(run: dict) -> None:
                                  "rationale": "Time Machine counterfactual"}]}
     table = compiler.compile_baseline(run, signoff, ledger.load_rules())
 
-    theme.section("the spec ships", "Compiled from the signed baseline — pure code, every path cites it",
+    theme.section("the spec ships", "Compiled from the signed baseline, pure code, every path cites it",
                   f"{table.baseline_id} · rule table v{table.version}")
     st.markdown('<p class="se-trace">spec + your rulings compile into this behavior · no model at runtime · flip the ruling and watch it propagate</p>', unsafe_allow_html=True)
 
-    tm = st.toggle(":material/history: Executable Time Machine — reverse the C1 ruling (published policy wins)",
+    tm = st.toggle(":material/history: Executable Time Machine, reverse the C1 ruling (published policy wins)",
                    value=st.session_state.get("tm_reverse_c1", False))
     if tm != st.session_state.get("tm_reverse_c1", False):
         st.session_state["tm_reverse_c1"] = tm
         st.rerun()
     if not table.auto_approval_enabled:
-        st.markdown('<div class="se-flag" style="display:block">rule table v2 active — auto-approval DISABLED by the reversed ruling; every clean claim now takes the human path</div>', unsafe_allow_html=True)
+        st.markdown('<div class="se-flag" style="display:block">rule table v2 active, auto-approval DISABLED by the reversed ruling; every clean claim now takes the human path</div>', unsafe_allow_html=True)
 
-    with st.expander(f"decision table v{table.version} — the compiled IR this engine executes", icon=":material/balance:"):
+    with st.expander(f"decision table v{table.version}, the compiled IR this engine executes", icon=":material/balance:"):
         for e in sorted(table.entries, key=lambda x: x.order):
             conds = " AND ".join(f'{c["field"]} {c["op"]} {c["value"]}' for c in e.conditions) or "always"
             st.markdown(f'<div class="se-gatehit"><span class="rid">{esc(e.id)}</span> · IF {esc(conds)} → '
@@ -641,16 +641,16 @@ def _reply_line(run: dict, role: str, refs: list | None) -> str:
     for r in refs or []:
         f = fmap.get(r)
         if f and f.get("assigned_role") and f["assigned_role"] != role:
-            return f'↩ on {r} — raised by {team.role_label(f["assigned_role"])}'
+            return f'↩ on {r}, raised by {team.role_label(f["assigned_role"])}'
     return ""
 
 
 _D_RUBRIC = {
-    "D1": "Direction coverage — every source requirement and decision addressed, none silently dropped",
-    "D2": "Expert translation — edge cases and failure paths beyond what sources literally said",
-    "D3": "Grounding discipline — every domain fact traces to a claim id; invented facts are P0",
-    "D4": "Scope discipline — explicit out-of-scope, no unplanned dependencies",
-    "D5": "Dev-readiness — testable ACs, explicit numbers, no hedge words, active voice",
+    "D1": "Direction coverage, every source requirement and decision addressed, none silently dropped",
+    "D2": "Expert translation, edge cases and failure paths beyond what sources literally said",
+    "D3": "Grounding discipline, every domain fact traces to a claim id; invented facts are P0",
+    "D4": "Scope discipline, explicit out-of-scope, no unplanned dependencies",
+    "D5": "Dev-readiness, testable ACs, explicit numbers, no hedge words, active voice",
 }
 
 _ACTIVE_REFS: dict[str, str] = {}
@@ -665,7 +665,7 @@ def _ref_index(run: dict) -> dict[str, str]:
         src = (c.get("sources") or [{}])[0]
         who = src.get("speaker") or src.get("source_file", "")
         quote = (src.get("quote") or "")[:150]
-        idx[c["id"]] = f'{c["claim"]} — {who}: “{quote}”'
+        idx[c["id"]] = f'{c["claim"]}, {who}: “{quote}”'
     for c in s.get("conflicts", {}).get("conflicts", []):
         idx[c["id"]] = f'conflict ({c["kind"]}): {c["description"][:220]}'
     for rnd in ("grade_round1", "grade_round2"):
@@ -706,7 +706,7 @@ MACHINE_ROLES = {
     "advisor": ("Advisor", "#8E9A92"),
 }
 
-LEGEND = ("hover any underlined id to read what it is — W evidence claim · C conflict · "
+LEGEND = ("hover any underlined id to read what it is, W evidence claim · C conflict · "
           "G gate rule · F grader finding · R requirement · D1–D5 rubric")
 
 
@@ -730,14 +730,14 @@ def chat_msg_html(role_key: str, message: str, stance: str = "", cursor: bool = 
     if work_notes:
         wn = work_notes
         rows = f'<b>observation</b> {_linkify(esc(wn.get("observation", "")))}<br>'
-        rows += (f'<b>evidence</b> {_linkify(esc(", ".join(wn.get("evidence_refs") or []) or "—"))} · '
+        rows += (f'<b>evidence</b> {_linkify(esc(", ".join(wn.get("evidence_refs") or []) or "·"))} · '
                  f'<b>confidence</b> {esc(wn.get("confidence", ""))}<br>')
         rows += f'<b>risk</b> {_linkify(esc(wn.get("risk", "")))}'
         if wn.get("proposed_change"):
             rows += f'<br><b>proposed</b> {_linkify(esc(wn["proposed_change"]))}'
         if wn.get("open_assumption"):
             rows += f'<br><b>open assumption</b> {_linkify(esc(wn["open_assumption"]))}'
-        think = (f'<details class="se-think"><summary>thinking — how {esc(label)} got here</summary>'
+        think = (f'<details class="se-think"><summary>thinking, how {esc(label)} got here</summary>'
                  f'<div class="tbody">{rows}</div></details>')
     return (f'<div class="se-gmsg"><div class="who" style="--c:{color};color:{color}">{esc(label)}'
             f'<span class="st">{stance_html}</span></div>'
@@ -788,7 +788,7 @@ def render_chat(run: dict) -> None:
             st.download_button("eval-log (full run JSON)", json.dumps(run, indent=2, ensure_ascii=False),
                                "run.json", use_container_width=True)
             if run["meta"].get("evidence_pack") == "byo":
-                st.caption("drift watch is off for uploaded packs — files live in this session only")
+                st.caption("drift watch is off for uploaded packs, files live in this session only")
             elif st.button("Check evidence drift", use_container_width=True):
                 for d in drift.check(run):
                     feed.append({"kind": "system", "text": d["text"]})
@@ -819,7 +819,7 @@ def render_chat(run: dict) -> None:
 def _render_feed_item(item: dict) -> None:
     kind = item["kind"]
     if kind == "system":
-        st.markdown(f'<p class="se-sysmsg">— {esc(item["text"])} —</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="se-sysmsg">· {esc(item["text"])} ·</p>', unsafe_allow_html=True)
     elif kind == "phase":
         cast = f'<span class="cast">{esc(item["cast"])}</span>' if item.get("cast") else ""
         st.markdown(f'<div class="se-phasehead">{esc(item["text"])}{cast}</div>', unsafe_allow_html=True)
@@ -848,7 +848,7 @@ def _build_feed(run: dict) -> list[dict]:
     claims = s["wiki"]["claims"]
     srcs = {src_["source_file"] for c in claims for src_ in c["sources"]}
     items.append({"kind": "turn", "role": "wiki", "stance": "stage 1 · evidence",
-                  "message": f"Built {len(claims)} claims (W1–W{len(claims)}) from {len(srcs)} sources — "
+                  "message": f"Built {len(claims)} claims (W1–W{len(claims)}) from {len(srcs)} sources, "
                              "every claim carries a verbatim quote. From here, the team may only argue "
                              "from these ids; unsourced facts do not exist."})
     for c in s["conflicts"]["conflicts"]:
@@ -861,13 +861,13 @@ def _build_feed(run: dict) -> list[dict]:
     hits = " · ".join(f'{h["rule_id"]} {h["rule_class"]} ({h["requirement_id"]})' for h in g["hits"])
     items.append({"kind": "turn", "role": "gate", "stance": "code-enforced",
                   "message": f'{g["errors"]} errors, {warn} warnings before any model grades: {hits}. '
-                             "Deterministic code — no model can talk its way past it."})
+                             "Deterministic code, no model can talk its way past it."})
 
     g1 = s["grade_round1"]
     ftags = " · ".join(f'{f["id"]} ({f["priority"]}·{f["dimension"]}·{f["requirement_id"]})'
                        for f in g1["findings"])
     items.append({"kind": "turn", "role": "grader", "stance": "adversarial review · round 1",
-                  "message": f'{g1["overall_score"]}/100 — {g1["verdict"].replace("_", " ")}. '
+                  "message": f'{g1["overall_score"]}/100, {g1["verdict"].replace("_", " ")}. '
                              f'{len(g1["findings"])} findings: {ftags}. Full text in Report; '
                              "the debate below works through them, role by role."})
 
@@ -888,7 +888,7 @@ def _build_feed(run: dict) -> list[dict]:
 
     g2 = s["grade_round2"]
     items.append({"kind": "turn", "role": "grader", "stance": "re-grade · round 2",
-                  "message": f'After the amendments: {g1["overall_score"]} → {g2["overall_score"]}/100 — '
+                  "message": f'After the amendments: {g1["overall_score"]} → {g2["overall_score"]}/100, '
                              f'{g2["verdict"].replace("_", " ")}. '
                              f'Gate: {g["errors"]} → {s["gate_round2"]["errors"]} errors.'})
 
@@ -927,7 +927,7 @@ def _play_into_chat(run: dict, container, strip_ph, animate: bool) -> None:
                 continue
             kind = item["kind"]
             if kind == "system":
-                st.markdown(f'<p class="se-sysmsg">— {esc(item["text"])} —</p>', unsafe_allow_html=True)
+                st.markdown(f'<p class="se-sysmsg">· {esc(item["text"])} ·</p>', unsafe_allow_html=True)
                 time.sleep(0.3)
             elif kind == "phase":
                 _paint(set(item.get("roles", [])), spent)
@@ -944,7 +944,7 @@ def _play_into_chat(run: dict, container, strip_ph, animate: bool) -> None:
                 wn = item.get("work_notes") or {}
                 reply = item.get("reply", "")
                 if role in MACHINE_ROLES:
-                    # machinery reports snap in — they are stages, not speakers
+                    # machinery reports snap in, they are stages, not speakers
                     st.markdown(chat_msg_html(role, msg, item.get("stance", "")), unsafe_allow_html=True)
                     spent += len(msg)
                     _paint(set(), spent)
@@ -984,7 +984,7 @@ def _handle_human_message(run: dict, prompt: str) -> None:
     role = _pick_role(prompt)
     if not api_key_:
         feed.append({"kind": "system",
-                     "text": f"recorded to the eval-log · {team.role_label(role)} would answer here — "
+                     "text": f"recorded to the eval-log · {team.role_label(role)} would answer here, "
                              "no inference key on this deployment (add one in Run live, or sponsored mode)"})
         return
     s = run["stages"]
@@ -1012,7 +1012,7 @@ def _handle_human_message(run: dict, prompt: str) -> None:
 
 # ---------------------------------------------------------------- run bar
 # Viewer-facing workspaces. Overview (the verdict + receipts) is first, so a
-# cold viewer lands on what the system *found* — not a chat frame. "Debate" is
+# cold viewer lands on what the system *found*, not a chat frame. "Debate" is
 # the argument that produced the fixes, reachable on demand, never the front door.
 WORKSPACES = ["Overview", "Debate", "Verify", "Sign-off"]
 
@@ -1042,7 +1042,7 @@ def render_run_bar(run: dict) -> str:
         ":material/download: raw run", data=json.dumps(run, indent=2, ensure_ascii=False),
         file_name=f"knowledge-engine-{kind}.json", mime="application/json",
         use_container_width=True,
-        help="Verify it yourself: the full run as JSON — every model call, prompt, token "
+        help="Verify it yourself: the full run as JSON, every model call, prompt, token "
              "count and timestamp. Don't trust the label; inspect the data (or run your own live).",
     )
     ws = st.radio("workspace", WORKSPACES, horizontal=True, label_visibility="collapsed",
@@ -1055,14 +1055,14 @@ def _decision_options(text: str) -> list[str]:
     low = text.lower()
     if "policy" in low:
         return [
-            "Approve with explicit launch precondition — policy must be amended first (recommended)",
+            "Approve with explicit launch precondition, policy must be amended first (recommended)",
             "Reverse: the published policy wins; disable the automated behavior in v1",
-            "Defer — assign an owner and a due date; blocks unconditional shipment",
+            "Defer, assign an owner and a due date; blocks unconditional shipment",
         ]
     if "counsel" in low or "e-kyc" in low or "confirm" in low:
         return [
             "Confirm the evidence-backed position (recommended)",
-            "Require a legal citation — block the requirement until provided",
+            "Require a legal citation, block the requirement until provided",
             "Defer to counsel with owner and date",
         ]
     return ["Approve as resolved (recommended)", "Reverse the resolution", "Defer with owner and date"]
@@ -1078,7 +1078,7 @@ def render_console(run: dict) -> None:
         render_baseline(run, st.session_state["signoff"])
         return
 
-    theme.section("the human", "Decision Console — your authority, recorded",
+    theme.section("the human", "Decision Console, your authority, recorded",
                   f"{len(decisions)} rulings + {len(amendments)} reviews · ≈60 seconds")
     st.markdown('<p class="se-trace">your rulings rewrite the baseline and become permanent rules</p>', unsafe_allow_html=True)
 
@@ -1092,7 +1092,7 @@ def render_console(run: dict) -> None:
                                           placeholder="e.g. CEO confirmed in standup; Legal ticket L-42 opened")
                 rulings.append({"decision_index": i, "decision_text": d, "choice": choice, "rationale": rationale})
                 st.write("")
-            st.markdown('<p class="se-trace">amendment reviews — Accept enters the baseline; Edit re-runs the gate; Reject requires a reason</p>', unsafe_allow_html=True)
+            st.markdown('<p class="se-trace">amendment reviews, Accept enters the baseline; Edit re-runs the gate; Reject requires a reason</p>', unsafe_allow_html=True)
             reviews: list[dict] = []
             for i, am in enumerate(amendments):
                 cols = st.columns([3, 2])
@@ -1113,11 +1113,11 @@ def render_console(run: dict) -> None:
             for r in needs_text:
                 am = amendments[r["amendment_index"]]
                 if r["action"] == "edit":
-                    r["edited_after"] = st.text_area(f'{am["requirement_id"]} — your text', value=am["after"], key=f"edit_{r["amendment_index"]}")
-                r["rationale"] = st.text_input(f'{am["requirement_id"]} — why ({r["action"]})', key=f"why_{r["amendment_index"]}")
+                    r["edited_after"] = st.text_area(f'{am["requirement_id"]}, your text', value=am["after"], key=f"edit_{r["amendment_index"]}")
+                r["rationale"] = st.text_input(f'{am["requirement_id"]}, why ({r["action"]})', key=f"why_{r["amendment_index"]}")
 
         proposed = ledger.propose_rules(run, draft["rulings"], draft["reviews"])
-        st.markdown('<p class="se-trace">rules distilled from YOUR judgment — approve, or decline learning. Rules are scoped, versioned, revocable.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="se-trace">rules distilled from YOUR judgment, approve, or decline learning. Rules are scoped, versioned, revocable.</p>', unsafe_allow_html=True)
         approvals = []
         for rule in proposed:
             theme.card(
@@ -1170,7 +1170,7 @@ def render_console(run: dict) -> None:
 
 def render_baseline(run: dict, signoff: dict) -> None:
     spec = run["stages"]["corrected_spec"]
-    theme.section("release baseline", f"{spec['feature_name']} — governed & ready", signoff["baseline_id"])
+    theme.section("release baseline", f"{spec['feature_name']}, governed & ready", signoff["baseline_id"])
     st.markdown(
         '<div class="se-stats">'
         + stat(str(len(spec["requirements"])), "requirements")
@@ -1184,7 +1184,7 @@ def render_baseline(run: dict, signoff: dict) -> None:
         theme.card(
             f'<div class="rowtop"><span class="se-id">RULING</span>'
             f'<span class="se-topic">{esc(r["choice"])}</span></div>'
-            f'<div class="se-trace">{esc(r["decision_text"][:160])} · rationale: {esc(r["rationale"] or "—")} · recorded by you, {esc(signoff["signed_at"])}</div>'
+            f'<div class="se-trace">{esc(r["decision_text"][:160])} · rationale: {esc(r["rationale"] or "·")} · recorded by you, {esc(signoff["signed_at"])}</div>'
         )
 
     c1, c2, c3 = st.columns(3)
@@ -1203,15 +1203,15 @@ def render_baseline(run: dict, signoff: dict) -> None:
             rule = h["rule"]
             st.markdown(
                 f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(rule["id"])}</span>'
-                f'<span class="ctitle">{esc(rule["title"])} — fired on {esc(h["requirement_id"])}</span></div>'
+                f'<span class="ctitle">{esc(rule["title"])}, fired on {esc(h["requirement_id"])}</span></div>'
                 f'<div class="se-body">{esc(rule["rule_text"])}</div>'
                 f'<div class="se-trace">matched: {esc(", ".join(h["matched_keywords"]))} · effect: {esc(h["effect"])} · '
-                f'born from {esc(rule["born_item"])}, by {esc(rule["born_by"])}, {esc(rule["born_date"])} — '
+                f'born from {esc(rule["born_item"])}, by {esc(rule["born_by"])}, {esc(rule["born_date"])}, '
                 "your past self just reviewed this draft before any model ran.</div></div>",
                 unsafe_allow_html=True,
             )
 
-    with st.expander("Decision Time Machine — what if you ruled differently on C1?", icon=":material/history:"):
+    with st.expander("Decision Time Machine, what if you ruled differently on C1?", icon=":material/history:"):
         branch = timemachine.alternative_branch(run, "C1")
         if branch:
             st.markdown(f'<p class="se-body"><b>What if:</b> {esc(branch["what_if"])}</p>', unsafe_allow_html=True)
@@ -1255,7 +1255,7 @@ def render_trace(run: dict) -> None:
             checks = "".join(
                 f'<div class="se-gatehit"><span class="{ "rid" if c["result"] == "FAIL" else "" }" style="color:{"#C0685C" if c["result"] == "FAIL" else "#8E9A92"}">'
                 f'{ theme.micon("close", size="14px") if c["result"] == "FAIL" else theme.micon("check", size="14px")} {esc(c["dimension"])}</span> {esc(c["item"])}'
-                + (f' — <i>{esc(c["note"])}</i>' if c["note"] else "") + "</div>"
+                + (f', <i>{esc(c["note"])}</i>' if c["note"] else "") + "</div>"
                 for c in g["checklist"]
             )
             theme.card(checks)
@@ -1267,7 +1267,7 @@ def render_trace(run: dict) -> None:
                     f'<span class="se-topic">{esc(f["requirement_id"])}</span>'
                     f'<span class="se-chip">→ {esc(team.role_label(f["assigned_role"]))}</span></div>'
                     f'<div class="se-body">{esc(f["description"])}</div>'
-                    f'<div class="se-trace">evidence: {esc(f["evidence_ref"] or "none — the absence is the finding")} · fix: {esc(f["suggested_fix"])}</div>'
+                    f'<div class="se-trace">evidence: {esc(f["evidence_ref"] or "none, the absence is the finding")} · fix: {esc(f["suggested_fix"])}</div>'
                 )
 
     with tabs[1]:
@@ -1291,7 +1291,7 @@ def render_trace(run: dict) -> None:
                 elif ev["type"] == "turn":
                     st.markdown(turn_html(ev), unsafe_allow_html=True)
                 elif ev["type"] == "no_objection":
-                    st.markdown(f'<div class="se-noobj">{esc(team.role_label(ev["role"]))} — no standing issue, no objection (0 tokens)</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="se-noobj">{esc(team.role_label(ev["role"]))}, no standing issue, no objection (0 tokens)</div>', unsafe_allow_html=True)
         theme.section("", "Arbiter", "")
         theme.card(f'<div class="se-body">{esc(s["debate"]["arbiter"]["summary"])}</div>')
 
@@ -1330,7 +1330,7 @@ def render_trace(run: dict) -> None:
                     f'<span class="se-topic">{esc(item["concern"])}</span></div>'
                     f'<div class="se-body">{esc(item["suggestion"])}</div>'
                 )
-            st.markdown('<p class="se-trace">the advisor never blocks — S0/S1/S2 are inputs to the human sign-off</p>', unsafe_allow_html=True)
+            st.markdown('<p class="se-trace">the advisor never blocks, S0/S1/S2 are inputs to the human sign-off</p>', unsafe_allow_html=True)
 
 
 def render_how(run: dict) -> None:
@@ -1383,7 +1383,7 @@ def render_live(sponsored_run: bool = False) -> None:
             names = [f.name for f in byo_files]
             has_spec = "draft-spec.json" in names
             if len(names) - (1 if has_spec else 0) < 1:
-                st.error("Upload at least one evidence file — a transcript, doc, code or schema "
+                st.error("Upload at least one evidence file, a transcript, doc, code or schema "
                          "(.md/.txt is enough).")
                 st.stop()
             import tempfile
@@ -1399,7 +1399,7 @@ def render_live(sponsored_run: bool = False) -> None:
                 st.info(f"BYO evidence pack: {len(names) - 1} evidence files + your draft spec · "
                         "processed in this session only")
             else:
-                st.info(f"BYO evidence pack: {len(names)} evidence files, no draft spec — the engine "
+                st.info(f"BYO evidence pack: {len(names)} evidence files, no draft spec, the engine "
                         "will draft a spec from your evidence first, then red-team its own draft · "
                         "processed in this session only")
 
@@ -1416,8 +1416,8 @@ def render_live(sponsored_run: bool = False) -> None:
         st.markdown('<p class="se-trace" style="margin-top:10px">LIVE MODEL RUN · real tokens · '
                     f'{esc(eff_model)}{" · on us" if sponsored_run else ""}</p>', unsafe_allow_html=True)
     with col_chat:
-        _whose = "the AnDigi case — free, on us" if sponsored_run else "your evidence"
-        st.markdown(f'<p class="se-sysmsg">— live run · the full roster is working on {_whose} —</p>',
+        _whose = "the AnDigi case, free, on us" if sponsored_run else "your evidence"
+        st.markdown(f'<p class="se-sysmsg">· live run · the full roster is working on {_whose} ·</p>',
                     unsafe_allow_html=True)
         status_area = st.container()
         stream_area = st.container()
@@ -1439,7 +1439,7 @@ def render_live(sponsored_run: bool = False) -> None:
         if state == "start":
             boxes[stage] = status_area.status(titles.get(stage, stage), state="running")
         elif stage in boxes:
-            boxes[stage].update(label=f"{titles.get(stage, stage)} — done · {llm.usage.total:,} tokens burned", state="complete")
+            boxes[stage].update(label=f"{titles.get(stage, stage)}, done · {llm.usage.total:,} tokens burned", state="complete")
         _odo()
 
     def on_event(ev: dict) -> None:
@@ -1456,7 +1456,7 @@ def render_live(sponsored_run: bool = False) -> None:
             _odo()
         elif ev["type"] == "no_objection":
             done_roles.add(ev["role"])
-            stream_area.markdown(f'<div class="se-noobj">{esc(team.role_label(ev["role"]))} — no objection (0 tokens)</div>', unsafe_allow_html=True)
+            stream_area.markdown(f'<div class="se-noobj">{esc(team.role_label(ev["role"]))}, no objection (0 tokens)</div>', unsafe_allow_html=True)
         elif ev["type"] == "router" and not ev.get("close_phase"):
             stream_area.markdown(f'<p class="se-trace">router → {esc(ev["focused_question"])}</p>', unsafe_allow_html=True)
 
@@ -1475,7 +1475,7 @@ def render_live(sponsored_run: bool = False) -> None:
             sponsored.release_slot()
         _m = str(err)
         if "402" in _m or "credit" in _m.lower() or "more credits" in _m.lower():
-            st.error("Live run unavailable — the OpenRouter key is **out of credits**. "
+            st.error("Live run unavailable, the OpenRouter key is **out of credits**. "
                      "Top up at openrouter.ai/settings/credits. The recorded run (← Back) is "
                      "fully available and is itself a real model run.")
         else:
@@ -1499,7 +1499,7 @@ def render_live(sponsored_run: bool = False) -> None:
     st.session_state["active_run"] = run
     st.session_state["active_run_name"] = name
     st.session_state["workspace"] = "Overview"
-    st.success(f"Run complete — saved as {name}.json. Showing the verdict + catches…")
+    st.success(f"Run complete, saved as {name}.json. Showing the verdict + catches…")
     st.rerun()
 
 
@@ -1513,7 +1513,7 @@ if run_sponsored:
         render_live(sponsored_run=True)
         _live_started = True
     else:
-        st.warning("Free live runs are busy or used up right now — here's a recorded run instead. "
+        st.warning("Free live runs are busy or used up right now, here's a recorded run instead. "
                    "Try again in a moment, or use your own key.")
 elif run_live and api_key:
     render_live()
@@ -1538,4 +1538,4 @@ elif chosen:
     else:
         render_console(_run)
 else:
-    st.error("No recorded runs found in data/runs/ — run scripts/make_demo_run.py first.")
+    st.error("No recorded runs found in data/runs/, run scripts/make_demo_run.py first.")
