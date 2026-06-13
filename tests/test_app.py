@@ -33,7 +33,8 @@ def test_default_view_is_the_overview(at):
     assert "spec readiness" in body
     assert "recorded run" in body  # telemetry labels the default honestly (no unverifiable "real" claim)
     assert "trace" in body          # checkable metadata (model · tokens · content-hash trace)
-    assert "live reasoning" in body  # the model's actual logic chain is replayed, not just wording
+    assert "live reasoning" in body  # the derived map of the logic chain
+    assert "observation" in body     # the model's ACTUAL reasoning (verbatim turns + work-notes) is inline, not buried
 
 
 def test_every_workspace_renders(at):
