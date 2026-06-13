@@ -55,9 +55,8 @@ with st.sidebar:
     # Models you can run on the sponsored key (cheap + reliable first). Type any
     # OpenRouter id to try another — e.g. a DeepSeek V4. The per-run token cap
     # bounds the cost whatever you pick.
-    _SPON_MODELS = ["deepseek/deepseek-chat", "deepseek/deepseek-v3.2-exp",
-                    "google/gemini-2.0-flash-001", "meta-llama/llama-3.3-70b-instruct",
-                    "qwen/qwen-2.5-72b-instruct"]
+    _SPON_MODELS = ["deepseek/deepseek-chat", "google/gemini-2.0-flash-001",
+                    "meta-llama/llama-3.3-70b-instruct", "qwen/qwen-2.5-72b-instruct"]
     sponsored_model = sponsored.SPONSORED_MODEL
     if sponsored.available():
         _left = sponsored.remaining_runs()
