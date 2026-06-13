@@ -207,7 +207,29 @@ def render_hero(run: dict) -> None:
     theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic case)")
     # (1) proof it's a real model run — exact tokens/model/duration, or an honest "scripted" label
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
-    # (2) the intelligence, alive: replay the model's real reasoning chain —
+    # (2) PRIMARY action up top + mobile-reachable: pick a model, run it live on a
+    # no-key sponsored key. The recorded run renders below instantly to read/audit.
+    if sponsored.available():
+        _left = sponsored.remaining_runs()
+        st.selectbox("Model for the live run", SPON_MODELS, key="spon_model", accept_new_options=True,
+                     help="No-key live run uses this. deepseek-chat is fastest for the ~5-min cap; "
+                          "Kimi is a good alt; V4 is stronger but slower. Type any OpenRouter id.")
+        if st.button(f"▶ Watch it run live — ~5 min · no key  ·  {_left} free left",
+                     key="hero_live", type="primary", disabled=_left <= 0, use_container_width=True):
+            st.session_state["_trigger_sponsored"] = True
+            st.rerun()
+        st.markdown(
+            '<div class="se-try">Pick a model and watch the real red team run — no key needed. '
+            "Below is a <b>recorded real run</b> (instant) you can read and audit right now.</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="se-try"><span class="gold">▶ Audit it yourself</span> — open any receipt below to '
+            "trace a claim to its source. (Live runs need a sponsored key configured on the deployment.)</div>",
+            unsafe_allow_html=True,
+        )
+    # (3) the intelligence, alive: replay the model's real reasoning chain —
     # evidence → grounding → contradiction → gate → debate → resolution → fix
     steps = _reasoning_steps(run)
     if steps:
@@ -226,33 +248,6 @@ def render_hero(run: dict) -> None:
         + "</div>",
         unsafe_allow_html=True,
     )
-    # (3) make "try + audit" obvious without scrolling
-    # main-column action so it's reachable on mobile (sidebar is hidden there).
-    # The recorded run above is already the instant hero; this is the "see it
-    # happen" path — honestly labelled as a ~5-min live stream.
-    if sponsored.available():
-        _left = sponsored.remaining_runs()
-        # model picker lives here in the MAIN column (not the hidden sidebar) so a
-        # phone user can change the model AND run live without the hamburger.
-        st.selectbox("Model for the live run", SPON_MODELS, key="spon_model",
-                     accept_new_options=True,
-                     help="No-key live run uses this. deepseek-chat is fastest for the ~5-min cap; "
-                          "Kimi is a good alt; V4 is stronger but slower (may not finish). Type any OpenRouter id.")
-        if st.button(f"▶ Watch it run live — ~5 min · no key  ·  {_left} free left",
-                     key="hero_live", type="primary", disabled=_left <= 0, use_container_width=True):
-            st.session_state["_trigger_sponsored"] = True
-            st.rerun()
-        st.markdown(
-            '<div class="se-try">You\'re viewing a <b>recorded real run</b> (instant, above). Tap to watch '
-            "a fresh one stream live on the model you picked — or open any receipt below to audit a claim.</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            '<div class="se-try"><span class="gold">▶ Audit it yourself</span> — open any receipt below to '
-            "trace a claim to its source. (Live runs need a sponsored key configured on the deployment.)</div>",
-            unsafe_allow_html=True,
-        )
     # the pipeline, demoted to "how it runs"
     st.markdown('<div class="se-trace" style="margin:18px 0 -4px">how it runs</div>', unsafe_allow_html=True)
     st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
