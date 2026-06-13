@@ -91,12 +91,13 @@ with st.sidebar:
     )
 
 
-# Models offered for the no-key live run (verified OpenRouter ids). V4 Flash is
-# the default — strong + fast/cheap enough for the capped run; V4 Pro is the
-# 1.6T heavyweight (slower, pricier). Free-text entry allows any other id.
-SPON_MODELS = ["deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
-               "deepseek/deepseek-chat", "google/gemini-2.0-flash-001",
-               "meta-llama/llama-3.3-70b-instruct"]
+# Models offered for the no-key live run (verified OpenRouter ids). Default is
+# deepseek-chat — fastest/most reliable inside the ~5-min capped run. Kimi is a
+# solid alt. V4 is stronger but SLOWER (often won't finish in the cap). Free-text
+# entry allows any other id.
+SPON_MODELS = ["deepseek/deepseek-chat", "moonshotai/kimi-k2",
+               "deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
+               "google/gemini-2.0-flash-001"]
 
 # The main-column "watch it run live" button (see render_hero) sets this flag and
 # reruns; we read it here, after the sidebar, so the routing can start the run.
@@ -235,7 +236,8 @@ def render_hero(run: dict) -> None:
         # phone user can change the model AND run live without the hamburger.
         st.selectbox("Model for the live run", SPON_MODELS, key="spon_model",
                      accept_new_options=True,
-                     help="The free live run uses this model. Type any OpenRouter id (e.g. a DeepSeek V4 id) to try another.")
+                     help="No-key live run uses this. deepseek-chat is fastest for the ~5-min cap; "
+                          "Kimi is a good alt; V4 is stronger but slower (may not finish). Type any OpenRouter id.")
         if st.button(f"▶ Watch it run live — ~5 min · no key  ·  {_left} free left",
                      key="hero_live", type="primary", disabled=_left <= 0, use_container_width=True):
             st.session_state["_trigger_sponsored"] = True
