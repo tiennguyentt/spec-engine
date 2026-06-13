@@ -207,28 +207,20 @@ def render_hero(run: dict) -> None:
     theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic case)")
     # (1) proof it's a real model run — exact tokens/model/duration, or an honest "scripted" label
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
-    # (2) PRIMARY action up top + mobile-reachable: pick a model, run it live on a
-    # no-key sponsored key. The recorded run renders below instantly to read/audit.
+    # (2) The recorded view below is ALREADY a real run (instant). A live run is
+    # the full pipeline (~5 min), so it's strictly OPT-IN — tucked in a collapsed
+    # expander, never a primary button that traps the viewer in a 5-min wait.
     if sponsored.available():
         _left = sponsored.remaining_runs()
-        st.selectbox("Model for the live run", SPON_MODELS, key="spon_model", accept_new_options=True,
-                     help="No-key live run uses this. deepseek-chat is fastest for the ~5-min cap; "
-                          "Kimi is a good alt; V4 is stronger but slower. Type any OpenRouter id.")
-        if st.button(f"▶ Watch it run live — ~5 min · no key  ·  {_left} free left",
-                     key="hero_live", type="primary", disabled=_left <= 0, use_container_width=True):
-            st.session_state["_trigger_sponsored"] = True
-            st.rerun()
-        st.markdown(
-            '<div class="se-try">Pick a model and watch the real red team run — no key needed. '
-            "Below is a <b>recorded real run</b> (instant) you can read and audit right now.</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            '<div class="se-try"><span class="gold">▶ Audit it yourself</span> — open any receipt below to '
-            "trace a claim to its source. (Live runs need a sponsored key configured on the deployment.)</div>",
-            unsafe_allow_html=True,
-        )
+        with st.expander(f"▶ Run it live yourself — real model, ~5 min · no key  ({_left} free)", expanded=False):
+            st.caption("Optional. Everything below is already a **real recorded run** (instant). "
+                       "A live run streams a fresh one end-to-end — it takes ~5 minutes and you can Stop anytime.")
+            st.selectbox("Model", SPON_MODELS, key="spon_model", accept_new_options=True,
+                         help="deepseek-chat is fastest; Kimi is a good alt; V4 is stronger but slower. Type any OpenRouter id.")
+            if st.button("▶ Start the ~5-min live run", key="hero_live",
+                         disabled=_left <= 0, use_container_width=True):
+                st.session_state["_trigger_sponsored"] = True
+                st.rerun()
     # (3) the intelligence, alive: replay the model's real reasoning chain —
     # evidence → grounding → contradiction → gate → debate → resolution → fix
     steps = _reasoning_steps(run)
