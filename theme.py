@@ -542,7 +542,7 @@ def telemetry(meta: dict) -> str:
             f'<span><b>{tin:,}</b> in / <b>{tout:,}</b> out tokens</span><span class="sep">·</span>'
             f'<span><b>{dur}</b>s</span><span class="sep">·</span>'
             f'<span>trace <b>{tid}</b></span><span class="sep">·</span>'
-            '<span class="gold">⬇ download &amp; verify ↑</span></div>'
+            f'<span class="gold">{micon("download", size="12px")} download &amp; verify</span></div>'
         )
     return (
         '<div class="se-telemetry"><span class="lbl">replay</span>'

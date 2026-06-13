@@ -52,8 +52,8 @@ with st.sidebar:
     st.header("Run live")
     # The PRIMARY "Run it live — on us" control lives in the MAIN column (see
     # render_hero) so it's reachable on mobile without opening this sidebar.
-    st.caption("▶ The “Run it live — on us” button is on the main screen (no key "
-               "needed). The option below is only for your own private evidence.")
+    st.caption("The live run lives on the main screen (bottom of the report). "
+               "The option below is only for your own private evidence + key.")
 
     # EDGE CASE: bring your own key — only for running your OWN private evidence.
     with st.expander("Run on your own evidence (your key, private)", expanded=False):
@@ -195,6 +195,22 @@ def _reasoning_steps(run: dict) -> list[dict]:
     return steps
 
 
+def _reason_gen(turns: list[dict]):
+    """Stream the recorded reasoning word-by-word so it reads as the model
+    thinking in real time — a fast replay of the real run (not live inference)."""
+    for t in turns:
+        yield f"\n\n**{team.role_label(t['role'])}** · _{t.get('stance', '')}_\n\n"
+        for w in (t.get("message", "") or "").split():
+            yield w + " "
+            time.sleep(0.012)
+        wn = t.get("work_notes") or {}
+        if wn:
+            yield (f"\n\n> **observed** {wn.get('observation', '')}  \n"
+                   f"> **evidence** {', '.join(wn.get('evidence_refs', []))} · "
+                   f"**risk** {wn.get('risk', '')}\n")
+            time.sleep(0.18)
+
+
 # ---------------------------------------------------------------- hero
 def render_hero(run: dict) -> None:
     s = run["stages"]
@@ -212,7 +228,7 @@ def render_hero(run: dict) -> None:
     st.markdown(
         '<div class="se-flow-cap">An “approved” insurance spec — and the defects hiding in it.</div>'
         '<p class="se-hero-sub">A recorded model run, shown instantly (no waiting). '
-        "Don't take the label's word — <b>⬇ download the raw run</b> (top) to inspect every model call, "
+        "Don't take the label's word — <b>download the raw run</b> (top) to inspect every model call, "
         "prompt and token, or run your own live (bottom). Below: how it reasoned, with receipts.</p>",
         unsafe_allow_html=True,
     )
@@ -239,12 +255,16 @@ def render_hero(run: dict) -> None:
     turns = s["debate"]["turns"]
     if turns:
         st.markdown(
-            f'<p class="se-hero-sub" style="margin-top:6px">↑ that map is <b>ours</b>. ↓ the '
-            f"<b>model's own</b> reasoning — {len(turns)} verbatim agent turns, each showing what it "
-            "inspected, the evidence it cited, and the risk it flagged. No canned demo reasons like this.</p>",
+            '<p class="se-hero-sub" style="margin-top:6px">↑ a derived map. ↓ the <b>model\'s own</b> '
+            "reasoning — watch it think in real time (a fast replay of the real run), or read it verbatim. "
+            "No canned demo reasons like this.</p>",
             unsafe_allow_html=True,
         )
-        with st.expander(f"▸ Read the model's actual reasoning — {len(turns)} agent turns (verbatim)", expanded=False):
+        if st.button(":material/play_arrow: Watch it reason in real time", key="watch_reason",
+                     use_container_width=True):
+            st.write_stream(_reason_gen(turns))
+        with st.expander(f"or read it verbatim — {len(turns)} agent turns + work-notes",
+                         expanded=False, icon=":material/notes:"):
             for _t in turns:
                 st.markdown(turn_html(_t, show_notes=True), unsafe_allow_html=True)
     # the pipeline, demoted to "how it runs"
@@ -437,13 +457,13 @@ def render_hero(run: dict) -> None:
         _left = sponsored.remaining_runs()
         st.write("")
         theme.section("optional", "Run a fresh one live, yourself", "~5 min · no key")
-        with st.expander(f"▶ Start a live run on a real model  ({_left} free today)", expanded=False):
+        with st.expander(f"Start a live run on a real model  ({_left} free today)", expanded=False, icon=":material/play_arrow:"):
             st.caption("Optional and slow. Everything above is already a **real recorded run** that loaded "
                        "instantly — this just streams a brand-new one end-to-end (~5 min, uses OpenRouter "
                        "credits, Stop anytime). Picking a model only affects the run you start here.")
             st.selectbox("Model", SPON_MODELS, key="spon_model", accept_new_options=True,
                          help="deepseek-chat is fastest; Kimi is a good alt; V4 is stronger but slower. Type any OpenRouter id.")
-            if st.button("▶ Start the ~5-min live run", key="hero_live",
+            if st.button(":material/play_arrow: Start the ~5-min live run", key="hero_live",
                          disabled=_left <= 0, use_container_width=True):
                 st.session_state["_trigger_sponsored"] = True
                 st.rerun()
