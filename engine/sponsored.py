@@ -19,7 +19,10 @@ LOCK_FILE = Path(os.getenv("TMPDIR", "/tmp")) / "knowledge-engine-sponsored.lock
 LOCK_STALE_SECONDS = 15 * 60
 
 DAILY_RUN_CAP = int(os.getenv("SPONSORED_DAILY_CAP", "10"))
-PER_RUN_TOKEN_BUDGET = int(os.getenv("SPONSORED_RUN_BUDGET", "40000"))
+# a full AnDigi run (11-role debate) lands around ~60k tokens; give headroom so a
+# sponsored run completes instead of hitting the budget mid-debate (still pennies
+# on a cheap model). Override with SPONSORED_RUN_BUDGET.
+PER_RUN_TOKEN_BUDGET = int(os.getenv("SPONSORED_RUN_BUDGET", "90000"))
 SPONSORED_MODEL = os.getenv("SPONSORED_MODEL", "deepseek/deepseek-chat")
 
 
