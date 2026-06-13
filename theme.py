@@ -116,6 +116,28 @@ h1, h2, h3 {
 [data-testid="stExpander"] summary:hover { color: var(--accent); }
 .stTextInput input, .stSelectbox div { font-family: 'Schibsted Grotesk', sans-serif; }
 
+/* ── mobile-first: the sidebar is hidden behind a hamburger on phones, so the
+   page must stand on its own. Tighten padding, scale type, full-width taps. */
+@media (max-width: 640px) {
+  .block-container { padding-top: 1.1rem !important; padding-left: .85rem !important; padding-right: .85rem !important; padding-bottom: 3rem !important; }
+  .se-hero-head { font-size: 27px; }
+  .se-flow-cap { font-size: 23px; }
+  .se-stats { gap: 8px; }
+  .se-stat { min-width: 0; flex: 1 1 44%; padding: 12px 13px; }
+  .se-stat .v { font-size: 23px; }
+  .se-card { padding: 15px 14px; }
+  .se-catch { padding: 17px 15px; }
+  .se-reason { padding: 14px 13px; }
+  .se-rstep { font-size: 12px; }
+  .se-telemetry { font-size: 10.5px; gap: 7px 10px; padding: 8px 11px; }
+  .se-runbar { padding: 9px 12px; gap: 8px; }
+  .se-runbar .idn { font-size: 11px; }
+  /* full-width, thumb-sized tap targets */
+  .stButton button, .stDownloadButton button { width: 100%; min-height: 44px; }
+  /* let the workspace tabs wrap instead of overflowing */
+  .stRadio [role="radiogroup"] { flex-wrap: wrap; gap: 4px 10px; }
+}
+
 /* ---- motion ----------------------------------------------------------- */
 @keyframes seUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes seBlink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }

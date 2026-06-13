@@ -54,7 +54,7 @@ with st.sidebar:
     # capped. The visitor never has to create or paste a key to see the real thing.
     if sponsored.available():
         _left = sponsored.remaining_runs()
-        run_sponsored = st.button(":material/bolt: Run it live — on us", type="primary",
+        run_sponsored = st.button(":material/bolt: Run it live — on us (~5 min)", type="primary",
                                   disabled=_left <= 0, use_container_width=True)
         st.caption(f"real model inference · **no key needed** · {_left} free runs left today"
                    if _left > 0 else "today's free live runs are used up — use your own key below, or come back tomorrow")
@@ -95,6 +95,13 @@ with st.sidebar:
         "Built by **Tien Nguyen** — AI-native Product Manager · "
         "[tiennguyentt.github.io](https://tiennguyentt.github.io/)"
     )
+
+
+# A main-column "watch it run live" button (see render_hero) sets this flag and
+# reruns; we read it here, after the sidebar, so the routing can start the run.
+# This keeps the primary action reachable on mobile, where the sidebar is hidden.
+if st.session_state.pop("_trigger_sponsored", False):
+    run_sponsored = True
 
 
 # ---------------------------------------------------------------- helpers
@@ -217,12 +224,25 @@ def render_hero(run: dict) -> None:
         unsafe_allow_html=True,
     )
     # (3) make "try + audit" obvious without scrolling
-    st.markdown(
-        '<div class="se-try"><span class="gold">▶ Try it live — on us</span> — hit “Run it live” in '
-        "the sidebar to watch the real red team run on a live model (no key needed). Or open any "
-        "receipt below to audit a claim against its source.</div>",
-        unsafe_allow_html=True,
-    )
+    # main-column action so it's reachable on mobile (sidebar is hidden there).
+    # The recorded run above is already the instant hero; this is the "see it
+    # happen" path — honestly labelled as a ~5-min live stream.
+    if sponsored.available() and sponsored.remaining_runs() > 0:
+        if st.button("▶ Watch it run live on a real model — ~5 min · no key",
+                     key="hero_live", type="primary", use_container_width=True):
+            st.session_state["_trigger_sponsored"] = True
+            st.rerun()
+        st.markdown(
+            '<div class="se-try">You\'re viewing a <b>recorded real run</b> (instant, above). Tap to watch '
+            "a fresh one stream live — or open any receipt below to audit a claim against its source.</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="se-try"><span class="gold">▶ Audit it yourself</span> — open any receipt below to '
+            "trace a claim to its source. To run live on your own evidence, use the sidebar.</div>",
+            unsafe_allow_html=True,
+        )
     # the pipeline, demoted to "how it runs"
     st.markdown('<div class="se-trace" style="margin:18px 0 -4px">how it runs</div>', unsafe_allow_html=True)
     st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
