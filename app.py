@@ -42,7 +42,11 @@ with st.sidebar:
 
     st.header("Run")
     runs = list_runs()
-    chosen = st.selectbox("Recorded run", runs, format_func=lambda p: p.stem) if runs else None
+    # default to a real (live) recorded run so the landing proves real inference,
+    # not the scripted replay; fall back to whatever exists
+    _default_idx = next((i for i, p in enumerate(runs) if p.stem.startswith("live-")), 0)
+    chosen = (st.selectbox("Recorded run", runs, index=_default_idx, format_func=lambda p: p.stem)
+              if runs else None)
 
     st.divider()
     st.header("Run live")
@@ -133,16 +137,17 @@ def render_hero(run: dict) -> None:
     # (1) proof it's a real model run — exact tokens/model/duration, or an honest "scripted" label
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
     # (2) the problem made visceral in one glance: a flawed spec line, struck out and corrected
-    am0 = arbiter["amendments"][0]
-    st.markdown(
-        '<div class="se-leadfix"><div class="lf-k">one defect — struck out, corrected, receipted</div>'
-        f'<div class="lf-del">{esc(am0["before"])}</div>'
-        '<div class="lf-arrow">↓ corrected</div>'
-        f'<div class="lf-add">{esc(am0["after"])}</div>'
-        f'<div class="lf-badge">caught by gate + debate · {esc(", ".join(am0["finding_ids"]))} · '
-        "every term traces to evidence ↓</div></div>",
-        unsafe_allow_html=True,
-    )
+    if arbiter["amendments"]:
+        am0 = arbiter["amendments"][0]
+        st.markdown(
+            '<div class="se-leadfix"><div class="lf-k">one defect — struck out, corrected, receipted</div>'
+            f'<div class="lf-del">{esc(am0["before"])}</div>'
+            '<div class="lf-arrow">↓ corrected</div>'
+            f'<div class="lf-add">{esc(am0["after"])}</div>'
+            f'<div class="lf-badge">caught by gate + debate · {esc(", ".join(am0["finding_ids"]))} · '
+            "every term traces to evidence ↓</div></div>",
+            unsafe_allow_html=True,
+        )
     st.markdown('<div class="se-flow-cap">Messy evidence in. A verified, signed spec out.</div>',
                 unsafe_allow_html=True)
     st.markdown(
@@ -170,21 +175,26 @@ def render_hero(run: dict) -> None:
                 unsafe_allow_html=True)
 
 
-    # ---- catch 1: the evidence conflict ------------------------------------
-    theme.section("catch 01", "The policy forbids what the spec promises", "truth-hierarchy conflict")
+    # Catch titles are DATA-DRIVEN — derived from the run itself — so this view
+    # works on any run (curated replay or a messy real-model run), not just the
+    # scripted case. Generic section frames; the card copy comes from the data.
+
+    # ---- catch 1: a stakeholder conflict resolved by authority --------------
     c1 = next((c for c in s["conflicts"]["conflicts"] if c["kind"] == "business-rule"), None)
     if c1:
+        theme.section("catch 01", "A stakeholder conflict — resolved by authority, flagged for a human",
+                      "truth-hierarchy")
         win = find_claim(run, c1["winning_claim_id"])
         lose_id = next((cid for cid in c1["claim_ids"] if cid != c1["winning_claim_id"]), "")
         lose = find_claim(run, lose_id)
         inner = ""
-        if win:
+        if win and win.get("sources"):
             inner += f'<div class="se-vs">WINS BY AUTHORITY — {esc(win["authority"])}</div>' + source_quote_html(win["sources"][0])
-        if lose:
+        if lose and lose.get("sources"):
             inner += f'<div class="se-vs">LOSES — BUT AUDITORS READ THIS ({esc(lose["authority"])})</div>' + source_quote_html(lose["sources"][0])
         summary = (
             f'<div class="chead"><span class="cnum">{esc(c1["id"])}</span>'
-            f'<span class="ctitle">CEO says auto-approve · policy 4.1 says human review</span>'
+            f'<span class="ctitle">{esc(c1["description"])}</span>'
             + (f'<span class="se-chip" style="border-color:#D6A03C;color:#D6A03C">{theme.micon("flag", size="13px")} human decision</span>' if c1["needs_human_confirmation"] else "")
             + "</div>"
         )
@@ -192,43 +202,51 @@ def render_hero(run: dict) -> None:
         with st.expander("view receipt — both sources, verbatim", expanded=True):
             st.markdown(inner + f'<div class="se-body" style="margin-top:8px">{esc(c1["resolution"])}</div>', unsafe_allow_html=True)
 
-    # ---- catch 2: the invented regulation ----------------------------------
-    theme.section("catch 02", "A confident, invented regulation", "P0 · grounding")
-    f1 = next((f for f in g1["findings"] if f["priority"] == "P0"), None)
+    # ---- catch 2: the strongest grounding finding the grader caught ---------
+    f1 = next((f for f in g1["findings"] if f["priority"] == "P0"), None) \
+        or (g1["findings"][0] if g1["findings"] else None)
     if f1:
+        prio, role = f1["priority"], f1.get("assigned_role", "")
+        theme.section("catch 02", "An ungrounded claim the adversarial grader caught", f"{prio} · grounding")
         ev = find_claim(run, f1["evidence_ref"])
-        comp_turn = next((t for t in s["debate"]["turns"] if t["role"] == "compliance"), None)
+        role_turn = next((t for t in s["debate"]["turns"] if t["role"] == role), None) if role else None
+        summon = (f'<span class="se-summon" style="margin:0">{theme.micon("bolt", size="14px")} '
+                  f'{esc(team.role_label(role))} summoned</span>') if role else ""
         st.markdown(
-            f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(f1["id"])} · P0</span>'
-            f'<span class="ctitle">“Circular 14/2026” does not exist — the spec invented a regulation</span>'
-            f'<span class="se-summon" style="margin:0">{theme.micon("bolt", size="14px")} Compliance summoned</span></div></div>',
+            f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(f1["id"])} · {esc(prio)}</span>'
+            f'<span class="ctitle">{esc(f1["description"])}</span>{summon}</div></div>',
             unsafe_allow_html=True,
         )
-        with st.expander("view receipt — the corpus says the opposite"):
-            inner = f'<div class="se-body">{esc(f1["description"])}</div>'
-            inner += f'<div class="se-trace">claim-class violation: {esc(f1["claim_class_violation"])} · requirement {esc(f1["requirement_id"])}</div>'
-            if ev:
-                inner += '<div class="se-vs">THE CORPUS SAYS THE OPPOSITE</div>' + source_quote_html(ev["sources"][0])
+        with st.expander("view receipt — finding, violation, and the evidence it rests on"):
+            inner = f'<div class="se-body">{esc(f1["suggested_fix"])}</div>' if f1.get("suggested_fix") else ""
+            if f1.get("claim_class_violation"):
+                inner += f'<div class="se-trace">claim-class violation: {esc(f1["claim_class_violation"])} · requirement {esc(f1["requirement_id"])}</div>'
+            if ev and ev.get("sources"):
+                inner += '<div class="se-vs">WHAT THE EVIDENCE ACTUALLY SAYS</div>' + source_quote_html(ev["sources"][0])
             st.markdown(inner, unsafe_allow_html=True)
-            if comp_turn:
-                st.markdown(turn_html(comp_turn), unsafe_allow_html=True)
+            if role_turn:
+                st.markdown(turn_html(role_turn), unsafe_allow_html=True)
 
-    # ---- catch 3: code disagrees with the promise --------------------------
-    theme.section("catch 03", "The code disagrees with the promise", "artifact-state gap")
+    # ---- catch 3: spec vs the artifacts (code/DB) ---------------------------
     c2 = next((c for c in s["conflicts"]["conflicts"] if c["kind"] == "artifact-state-gap"), None)
     if c2:
+        theme.section("catch 03", "Spec says one thing — the code and data say another", "artifact-state gap")
         intended = find_claim(run, c2["winning_claim_id"])
         artifacts = [find_claim(run, cid) for cid in c2["claim_ids"]]
-        artifacts = [a for a in artifacts if a and a["claim_class"] == "artifact-state"]
+        artifacts = [a for a in artifacts if a and a.get("claim_class") == "artifact-state"]
+        locator = ""
+        if artifacts and artifacts[0].get("sources"):
+            src0 = artifacts[0]["sources"][0]
+            locator = src0.get("locator") or src0.get("source_file", "")
+        chip = f'<span class="se-chip">{esc(locator)}</span>' if locator else ""
         st.markdown(
             f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(c2["id"])}</span>'
-            f'<span class="ctitle">Spec promises 48h payout · code pays in 5 days</span>'
-            f'<span class="se-chip">sla.py:5 · DB default 5</span></div></div>',
+            f'<span class="ctitle">{esc(c2["description"])}</span>{chip}</div></div>',
             unsafe_allow_html=True,
         )
         with st.expander("view receipt — intended vs artifact state"):
             inner = ""
-            if intended:
+            if intended and intended.get("sources"):
                 inner += f'<div class="se-vs">THE INTENDED BEHAVIOR ({esc(intended["authority"])})</div>' + source_quote_html(intended["sources"][0])
             for a in artifacts:
                 inner += '<div class="se-vs">WHAT THE SYSTEM ACTUALLY DOES (artifact state — cannot be out-talked)</div>' + source_quote_html(a["sources"][0])
@@ -259,7 +277,8 @@ def render_hero(run: dict) -> None:
             f'<div class="se-diff-del">{esc(am["before"])}</div>'
             f'<div class="se-diff-add">{esc(am["after"])}</div>'
         )
-    _am_card(arbiter["amendments"][0])
+    if arbiter["amendments"]:
+        _am_card(arbiter["amendments"][0])
     strip = " · ".join(f'{am["requirement_id"]}' for am in arbiter["amendments"][1:])
     with st.expander(f"all corrected diffs — {strip} + new requirements"):
         for am in arbiter["amendments"][1:]:

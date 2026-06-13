@@ -1,8 +1,9 @@
 """UI smoke tests via Streamlit AppTest — no model calls, no browser.
 
-The app must render every workspace from the committed demo run, show the
-measured surfaces (recall scorecard, standards drawer), and populate the
-chat feed from the recorded sequence.
+The default recorded run is a REAL live-model run (live-andigi-deepseek), so
+the landing proves real inference. The hero is data-driven, so these assert
+generic structure (telemetry, measured surfaces, feed) rather than the
+scripted case's exact numbers.
 """
 
 import pytest
@@ -30,6 +31,7 @@ def test_default_view_is_the_overview(at):
     assert at.radio[0].value == "Overview"
     assert "se-countup" in body  # the readiness delta animates in the hero
     assert "spec readiness" in body
+    assert "real inference" in body  # telemetry strip proves the default is a real run
 
 
 def test_every_workspace_renders(at):
@@ -43,8 +45,8 @@ def test_report_shows_measured_surfaces(at):
     at.radio[0].set_value("Overview")
     at.run()
     body = _body(at)
-    assert "Detection recall" in body
-    assert "10/10 caught" in body
+    assert "Detection recall" in body  # measured recall on the planted-defect benchmark
+    assert "caught · recall" in body   # scorecard renders (run-agnostic: real run is 8/10)
     assert "INCOSE QUALITY CHARACTERISTICS" in body
     assert "se-countup" in body  # score animates from the real grade delta
 
@@ -59,7 +61,8 @@ def test_transcript_populates_chat_feed(at):
     feed = at.session_state["chat_feed"]
     kinds = {item["kind"] for item in feed}
     assert "turn" in kinds and "system" in kinds
-    assert any("RECORDED REPLAY" in i["text"] for i in feed if i["kind"] == "system")
+    # default is a real run, so the feed announces a live model run
+    assert any("MODEL RUN" in i["text"] for i in feed if i["kind"] == "system")
 
 
 def test_intro_lists_the_problems(at):
