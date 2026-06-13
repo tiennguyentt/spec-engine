@@ -136,14 +136,8 @@ h1, h2, h3 {
   .stButton button, .stDownloadButton button { width: 100%; min-height: 44px; }
   /* let the workspace tabs wrap instead of overflowing */
   .stRadio [role="radiogroup"] { flex-wrap: wrap; gap: 4px 10px; }
-  /* the pipeline diagram stacks vertically on a phone instead of scrolling
-     off the right edge — every node full-width, top to bottom */
+  /* no sideways bleed on a phone (the data-flow pipeline is already vertical) */
   html, body, [data-testid="stAppViewContainer"] { overflow-x: hidden; }
-  .se-flow { flex-direction: column; align-items: stretch; overflow-x: hidden; }
-  .se-fnode { min-width: 0; width: 100%; }
-  .se-flink { width: 100%; height: 14px; flex: 0 0 14px; align-self: stretch; background: transparent; }
-  .se-flink::after { display: none; }
-  .se-flink::before { content: '↓'; position: static; display: block; text-align: center; transform: none; color: var(--dim); }
   /* keep wide mono content (telemetry, reasoning) from forcing a sideways scroll */
   .se-telemetry, .se-reason, .se-leadfix { overflow-wrap: anywhere; }
   /* Streamlit has no hamburger — it opens the sidebar via a tiny chevron. Turn
@@ -353,38 +347,28 @@ h1, h2, h3 {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ── pipeline flow diagram: the 3-second scan ───────────────────────
-   Show the system as a node graph — evidence in, signed spec out — with a
-   gold pulse travelling the path and the code-gate node held under a light. */
-.se-flow {
-  display: flex; align-items: stretch; flex-wrap: nowrap;
-  overflow-x: auto; padding: 8px 2px 16px; margin: 16px 0 8px;
-  scrollbar-width: none;
+/* ── animated data-flow pipeline ────────────────────────────────────
+   A vertical timeline (not boxes): gold "data" continuously flows DOWN the
+   path; node markers light the code-gate (gold) and the signed spec (green). */
+.se-pipe { position: relative; padding-left: 30px; margin: 14px 0 6px; }
+.se-pipe::before { content: ''; position: absolute; left: 9px; top: 9px; bottom: 11px; width: 2px; background: var(--line-strong); border-radius: 2px; }
+.se-pipe::after {
+  content: ''; position: absolute; left: 8px; top: 9px; bottom: 11px; width: 4px; border-radius: 4px;
+  background: linear-gradient(180deg, transparent 0%, var(--accent) 48%, transparent 100%);
+  background-size: 100% 68px; background-repeat: no-repeat; opacity: .95;
+  animation: sePipeFlow 2.6s linear infinite;
 }
-.se-flow::-webkit-scrollbar { display: none; }
-.se-fnode {
-  flex: 1 1 0; min-width: 128px;
-  border: 1px solid var(--line-strong); border-radius: 14px;
-  background: linear-gradient(180deg, var(--raised), var(--surface));
-  padding: 15px 15px 14px; position: relative;
-  animation: seUp .55s cubic-bezier(.16,1,.3,1) both;
-}
-.se-fnode .fk { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
-.se-fnode .ft { font-family: 'Schibsted Grotesk', sans-serif; font-weight: 640; font-size: 17px; color: var(--ink); line-height: 1.12; margin-top: 8px; }
-.se-fnode .fs { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
-.se-fnode.gate { border-color: rgba(214,160,60,.55); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
-.se-fnode.gate .fk, .se-fnode.gate .ft { color: var(--accent); }
-.se-fnode.out { border-color: rgba(142,154,146,.45); }
-.se-fnode.out .ft { color: var(--add); }
-.se-flink { flex: 0 0 30px; align-self: center; height: 1.5px; background: var(--line-strong); position: relative; }
-.se-flink::after {
-  content: ''; position: absolute; top: 50%; transform: translateY(-50%); left: -14px;
-  width: 16px; height: 5px; border-radius: 5px;
-  background: radial-gradient(circle, var(--accent), transparent 72%);
-  animation: seFlow 2.6s linear infinite;
-}
-@keyframes seFlow { 0% { left: -14px; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { left: calc(100% - 2px); opacity: 0; } }
-.se-flink::before { content: '▸'; position: absolute; right: -7px; top: 50%; transform: translateY(-50%); color: var(--line-strong); font-size: 11px; }
+@keyframes sePipeFlow { from { background-position: 0 -68px; } to { background-position: 0 calc(100% + 68px); } }
+.se-pnode { position: relative; padding: 9px 0 20px; animation: seUp .5s ease both; }
+.se-pnode .se-pmark { position: absolute; left: -25px; top: 13px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--dim); }
+.se-pnode.gate .se-pmark { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(214,160,60,.18); }
+.se-pnode.out .se-pmark { border-color: var(--add); }
+.se-pnode .pk { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+.se-pnode .pt { font-family: 'Schibsted Grotesk', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -.02em; color: var(--ink); margin-top: 3px; line-height: 1.1; }
+.se-pnode .ps { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); margin-top: 5px; }
+.se-pnode.gate .pt, .se-pnode.gate .pk { color: var(--accent); }
+.se-pnode.out .pt { color: var(--add); }
+@media (prefers-reduced-motion: reduce) { .se-pipe::after { animation: none; } }
 .se-flow-cap { font-family: 'Schibsted Grotesk', sans-serif; font-weight: 740; font-size: clamp(24px, 3.4vw, 38px); letter-spacing: -0.028em; color: var(--ink); line-height: 1.1; margin: 6px 0 10px; }
 
 /* ── inference-trace telemetry strip: real run, real numbers ──────── */
@@ -566,8 +550,8 @@ def telemetry(meta: dict) -> str:
 
 
 def flow_diagram(g1: int, g2: int, defects: int) -> str:
-    """The 3-second scan: the pipeline as an animated node graph — messy
-    evidence in, a verified signed spec out, the code gate held under a light."""
+    """The pipeline as an animated vertical data-flow timeline — gold data flows
+    down the path; the code gate and the signed spec light up. Not boxes."""
     nodes = [
         ("", "evidence", "Messy in", "transcripts · policy · code · DB"),
         ("", "trace", "Source-traced", "every claim → a receipt"),
@@ -575,18 +559,17 @@ def flow_diagram(g1: int, g2: int, defects: int) -> str:
         ("", "11 agents", "Red-team debate", "adversarial · graded"),
         ("out", "verified", "Signed spec", f"{g1} → {g2} · {defects} caught"),
     ]
-    parts: list[str] = []
+    rows = []
     for i, (kind, fk, ft, fs) in enumerate(nodes):
-        cls = ("se-fnode " + kind).strip()
-        parts.append(
+        cls = ("se-pnode " + kind).strip()
+        rows.append(
             f'<div class="{cls}" style="animation-delay:{i * 0.12:.2f}s">'
-            f'<div class="fk">{esc(fk)}</div>'
-            f'<div class="ft">{esc(ft)}</div>'
-            f'<div class="fs">{esc(fs)}</div></div>'
+            f'<span class="se-pmark"></span>'
+            f'<div class="pk">{esc(fk)}</div>'
+            f'<div class="pt">{esc(ft)}</div>'
+            f'<div class="ps">{esc(fs)}</div></div>'
         )
-        if i < len(nodes) - 1:
-            parts.append(f'<div class="se-flink" style="animation-delay:{i * 0.12 + 0.3:.2f}s"></div>')
-    return f'<div class="se-flow">{"".join(parts)}</div>'
+    return f'<div class="se-pipe">{"".join(rows)}</div>'
 
 
 # ---- chat terminal additions (round-7 + chat pivot) -------------------------
