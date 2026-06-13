@@ -27,6 +27,7 @@ PALETTE = {
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,-25..0&display=block');
 
 :root {
   --bg: #0B0E14; --surface: #11151F; --raised: #161B27;
@@ -282,6 +283,19 @@ h1, h2, h3 { font-family: 'IBM Plex Sans', sans-serif !important; letter-spacing
 .se-turn .tstance { color: var(--muted); }
 .se-turn .tround { color: var(--dim); margin-left: auto; }
 .se-turn .tmsg { color: #C3CAD6; font-size: 14.5px; line-height: 1.7; margin-top: 10px; }
+
+/* Material Symbols Rounded — the icon set. Use via theme.micon() in custom
+   HTML, or `:material/name:` directly in Streamlit component labels. */
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal; font-style: normal;
+  font-size: 1.15em; line-height: 1;
+  vertical-align: -0.20em;
+  letter-spacing: normal; text-transform: none; white-space: nowrap;
+  display: inline-block; direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
 </style>
 """
 
@@ -295,6 +309,26 @@ ROLE_COLORS = {
 
 def esc(value) -> str:
     return _html.escape(str(value))
+
+
+def micon(name: str, *, size: str | None = None, color: str | None = None,
+          fill: bool = False, weight: int | None = None) -> str:
+    """A Material Symbols Rounded glyph for use inside custom HTML.
+    `name` is the icon's codepoint name, e.g. 'play_arrow', 'download'."""
+    settings = []
+    if fill:
+        settings.append("'FILL' 1")
+    if weight:
+        settings.append(f"'wght' {weight}")
+    style = ""
+    if size:
+        style += f"font-size:{size};"
+    if color:
+        style += f"color:{color};"
+    if settings:
+        style += "font-variation-settings:" + ",".join(settings) + ";"
+    style_attr = f' style="{style}"' if style else ""
+    return f'<span class="ms"{style_attr}>{esc(name)}</span>'
 
 
 def inject() -> None:

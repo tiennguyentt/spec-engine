@@ -36,7 +36,7 @@ if st.session_state.get("view", "demo") == "intro":
 
 # ---------------------------------------------------------------- sidebar
 with st.sidebar:
-    if st.button("← What this system solves", use_container_width=True):
+    if st.button(":material/arrow_back: What this system solves", use_container_width=True):
         st.session_state["view"] = "intro"
         st.rerun()
 
@@ -60,7 +60,7 @@ with st.sidebar:
         st.download_button("draft-spec.json template",
                            (DATA_DIR / "andigi" / "draft-spec.json").read_text(encoding="utf-8"),
                            "draft-spec.json", use_container_width=True)
-        run_live = st.button("▶ Run the red team", type="primary", disabled=not api_key, use_container_width=True)
+        run_live = st.button(":material/play_arrow: Run the red team", type="primary", disabled=not api_key, use_container_width=True)
         st.caption("Hard budget 150k tokens, live burn shown. Cheap models work: every call is "
                    "schema-validated with retries. Uploaded files stay in this session only — "
                    "never stored server-side, never committed.")
@@ -174,7 +174,7 @@ def render_hero(run: dict) -> None:
         summary = (
             f'<div class="chead"><span class="cnum">{esc(c1["id"])}</span>'
             f'<span class="ctitle">CEO says auto-approve · policy 4.1 says human review</span>'
-            + ('<span class="se-chip" style="border-color:#F2A65A;color:#F2A65A">⚑ human decision</span>' if c1["needs_human_confirmation"] else "")
+            + (f'<span class="se-chip" style="border-color:#F2A65A;color:#F2A65A">{theme.micon("flag", size="13px")} human decision</span>' if c1["needs_human_confirmation"] else "")
             + "</div>"
         )
         st.markdown(f'<div class="se-catch">{summary}</div>', unsafe_allow_html=True)
@@ -190,7 +190,7 @@ def render_hero(run: dict) -> None:
         st.markdown(
             f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(f1["id"])} · P0</span>'
             f'<span class="ctitle">“Circular 14/2026” does not exist — the spec invented a regulation</span>'
-            f'<span class="se-summon" style="margin:0">⚡ Compliance summoned</span></div></div>',
+            f'<span class="se-summon" style="margin:0">{theme.micon("bolt", size="14px")} Compliance summoned</span></div></div>',
             unsafe_allow_html=True,
         )
         with st.expander("view receipt — the corpus says the opposite"):
@@ -282,7 +282,7 @@ def render_hero(run: dict) -> None:
             rows = "".join(
                 f'<div class="se-gatehit"><span class="{"rid" if d["caught"] else "warn"}" '
                 f'style="color:{"#3FB950" if d["caught"] else "#F85149"}">'
-                f'{"✓" if d["caught"] else "✗ MISSED"}</span> · {esc(d["id"])} [{esc(d["channel"])}] '
+                f'{theme.micon("check", size="14px") if d["caught"] else theme.micon("close", size="14px") + " MISSED"}</span> · {esc(d["id"])} [{esc(d["channel"])}] '
                 f'{esc(d["title"])} → <i>{esc(d["where"])}</i></div>'
                 for d in ev["defects"]
             )
@@ -293,11 +293,11 @@ def render_hero(run: dict) -> None:
     # ---- depth ----------------------------------------------------------------
     st.write("")
     theme.section("depth", "For the technical reviewer", "")
-    with st.expander("🔍 Inspect the full run — gate, D1-D5 grading, 11-role debate, evidence"):
+    with st.expander("Inspect the full run — gate, D1-D5 grading, 11-role debate, evidence", icon=":material/frame_inspect:"):
         render_trace(run)
-    with st.expander("⚙ How it works — architecture, budget, eval-log"):
+    with st.expander("How it works — architecture, budget, eval-log", icon=":material/settings:"):
         render_how(run)
-    with st.expander("📐 Standards alignment — INCOSE characteristics & EARS patterns"):
+    with st.expander("Standards alignment — INCOSE characteristics & EARS patterns", icon=":material/architecture:"):
         st.markdown(
             '<p class="se-body">What the gate and rubric enforce, read in the vocabulary an '
             "enterprise reviewer audits against. The mapping is ours, at the characteristic "
@@ -397,17 +397,17 @@ def render_shipped_feature(run: dict) -> None:
     if not table.auto_approval_enabled:
         st.markdown('<div class="se-flag" style="display:block">rule table v2 active — auto-approval DISABLED by the reversed ruling; every clean claim now takes the human path</div>', unsafe_allow_html=True)
 
-    with st.expander(f"⚖ decision table v{table.version} — the compiled IR this engine executes"):
+    with st.expander(f"decision table v{table.version} — the compiled IR this engine executes", icon=":material/balance:"):
         for e in sorted(table.entries, key=lambda x: x.order):
             conds = " AND ".join(f'{c["field"]} {c["op"]} {c["value"]}' for c in e.conditions) or "always"
             st.markdown(f'<div class="se-gatehit"><span class="rid">{esc(e.id)}</span> · IF {esc(conds)} → '
                         f'<b>{esc(e.verdict.upper())}</b> · <i>{esc(e.cites[:90])}</i></div>', unsafe_allow_html=True)
 
-    if st.button("▶ Run acceptance board (vectors derived independently from the baseline)"):
+    if st.button(":material/play_arrow: Run acceptance board (vectors derived independently from the baseline)"):
         results = compiler.run_acceptance(table)
         for r in results:
             color = "#3FB950" if r["passed"] else "#F85149"
-            mark = "✓" if r["passed"] else "✗"
+            mark = theme.micon("check", size="15px") if r["passed"] else theme.micon("close", size="15px")
             st.markdown(f'<div class="se-gatehit"><span style="color:{color};font-weight:600">{mark} {esc(r["id"])}</span> '
                         f'· {esc(r["ac"])} · expected <b>{esc(r["expect"])}</b> got <b>{esc(r["got"])}</b></div>',
                         unsafe_allow_html=True)
@@ -661,7 +661,7 @@ def render_chat(run: dict) -> None:
         if not feed:
             st.markdown(CASE_BRIEF, unsafe_allow_html=True)
             b1, b2, _sp = st.columns([1.6, 1.4, 3])
-            play = b1.button("▶ Play the run", type="primary", use_container_width=True)
+            play = b1.button(":material/play_arrow: Play the run", type="primary", use_container_width=True)
             instant = b2.button("Show transcript", use_container_width=True)
             if play or instant:
                 st.session_state["chat_played"] = True
@@ -884,7 +884,7 @@ def render_run_bar(run: dict) -> str:
     kcolor = {"scripted-demo": "#F2A65A", "live": "#3FB950", "real-inference": "#3FB950"}.get(kind, "#9AA3B2")
     score = run["stages"]["grade_round2"]["overall_score"]
     c_back, c_bar, c_dl = st.columns([0.6, 9.6, 1.8], gap="small")
-    if c_back.button("←", help="Back to the start screen (case brief + play)",
+    if c_back.button(":material/arrow_back:", help="Back to the start screen (case brief + play)",
                      use_container_width=True):
         # Reset the chat to its first screen so the run can be re-tested.
         # The intro page stays reachable from the sidebar.
@@ -900,7 +900,7 @@ def render_run_bar(run: dict) -> str:
         unsafe_allow_html=True,
     )
     c_dl.download_button(
-        "⬇ replay", data=json.dumps(run, indent=2, ensure_ascii=False),
+        ":material/download: replay", data=json.dumps(run, indent=2, ensure_ascii=False),
         file_name=f"knowledge-engine-{kind}.json", mime="application/json",
         use_container_width=True,
         help="Download this run as a self-contained JSON bundle — replayable and "
@@ -947,7 +947,7 @@ def render_console(run: dict) -> None:
         with st.form("console"):
             rulings: list[dict] = []
             for i, d in enumerate(decisions):
-                st.markdown(f'<div class="se-flag" style="display:block">⚑ {esc(d)}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="se-flag" style="display:block">{theme.micon("flag", size="14px")} {esc(d)}</div>', unsafe_allow_html=True)
                 choice = st.radio("Your ruling", _decision_options(d), key=f"rule_{i}", label_visibility="collapsed")
                 rationale = st.text_input("One-line rationale (permanent record)", key=f"rat_{i}",
                                           placeholder="e.g. CEO confirmed in standup; Legal ticket L-42 opened")
@@ -989,7 +989,7 @@ def render_console(run: dict) -> None:
                 f'<div class="se-trace">born from: {esc(rule.born_item)} · by you · {esc(rule.born_date)}</div>'
             )
             approvals.append(st.checkbox(f"Approve {rule.id}", value=True, key=f"appr_{rule.id}"))
-        if st.button("✍ Approve baseline & create handoff", type="primary"):
+        if st.button(":material/stylus_note: Approve baseline & create handoff", type="primary"):
             approved = [r for r, ok in zip(proposed, approvals) if ok]
             ledger.commit_rules(approved)
             signoff = {
@@ -1024,7 +1024,7 @@ def render_console(run: dict) -> None:
             st.session_state["signoff"] = signoff
             st.session_state["signoff_state"] = "signed"
             st.rerun()
-        if st.button("← Back to rulings"):
+        if st.button(":material/arrow_back: Back to rulings"):
             st.session_state["signoff_state"] = "pending"
             st.rerun()
 
@@ -1055,7 +1055,7 @@ def render_baseline(run: dict, signoff: dict) -> None:
 
     # ---- the compounding proof: rules fire on the NEXT draft -----------------
     theme.section("the loop", "Your judgment, applied to the next draft", "preflight · pure code")
-    if st.button("⚡ Preflight the next AnDigi draft (v1.1) with your rules"):
+    if st.button(":material/bolt: Preflight the next AnDigi draft (v1.1) with your rules"):
         v2 = DraftSpec.model_validate_json((DATA_DIR / "andigi-v2" / "draft-spec.json").read_text(encoding="utf-8"))
         hits = ledger.preflight(v2)
         if not hits:
@@ -1115,7 +1115,7 @@ def render_trace(run: dict) -> None:
             st.markdown(f'<div class="se-card"><div style="display:flex;gap:14px;flex-wrap:wrap">{dims}</div></div>', unsafe_allow_html=True)
             checks = "".join(
                 f'<div class="se-gatehit"><span class="{ "rid" if c["result"] == "FAIL" else "" }" style="color:{"#F85149" if c["result"] == "FAIL" else "#3FB950"}">'
-                f'{ "✗" if c["result"] == "FAIL" else "✓"} {esc(c["dimension"])}</span> {esc(c["item"])}'
+                f'{ theme.micon("close", size="14px") if c["result"] == "FAIL" else theme.micon("check", size="14px")} {esc(c["dimension"])}</span> {esc(c["item"])}'
                 + (f' — <i>{esc(c["note"])}</i>' if c["note"] else "") + "</div>"
                 for c in g["checklist"]
             )

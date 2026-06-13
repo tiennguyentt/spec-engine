@@ -155,7 +155,7 @@ def render() -> None:
 
     st.write("")
     c1, _ = st.columns([4, 3])
-    if c1.button("▶ Inspect the red-team report — catches with receipts",
+    if c1.button(":material/fact_check: Inspect the red-team report — catches with receipts",
                  type="primary", use_container_width=True):
         st.session_state["view"] = "demo"
         st.session_state["workspace"] = "Overview"
