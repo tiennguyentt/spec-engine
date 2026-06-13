@@ -52,11 +52,21 @@ with st.sidebar:
     st.header("Run live")
     # PRIMARY try-path: sponsored inference on a server-side key — no key needed,
     # capped. The visitor never has to create or paste a key to see the real thing.
+    # Models you can run on the sponsored key (cheap + reliable first). Type any
+    # OpenRouter id to try another — e.g. a DeepSeek V4. The per-run token cap
+    # bounds the cost whatever you pick.
+    _SPON_MODELS = ["deepseek/deepseek-chat", "deepseek/deepseek-v3.2-exp",
+                    "google/gemini-2.0-flash-001", "meta-llama/llama-3.3-70b-instruct",
+                    "qwen/qwen-2.5-72b-instruct"]
+    sponsored_model = sponsored.SPONSORED_MODEL
     if sponsored.available():
         _left = sponsored.remaining_runs()
+        sponsored_model = st.selectbox(
+            "Model for the live run", _SPON_MODELS, accept_new_options=True,
+            help="The free live run uses this model. Type any OpenRouter id (e.g. a DeepSeek V4 id) to try a different one.")
         run_sponsored = st.button(":material/bolt: Run it live — on us (~5 min)", type="primary",
                                   disabled=_left <= 0, use_container_width=True)
-        st.caption(f"real model inference · **no key needed** · {_left} free runs left today"
+        st.caption(f"real inference · **no key needed** · {esc(sponsored_model.split('/')[-1])} · {_left} free runs left today"
                    if _left > 0 else "today's free live runs are used up — use your own key below, or come back tomorrow")
     else:
         run_sponsored = False
@@ -1332,7 +1342,7 @@ def render_live(sponsored_run: bool = False) -> None:
     if sponsored_run:
         # routing has verified availability/cap and is holding the slot; we run
         # on the server-side key (capped budget) and release the slot when done.
-        eff_key, eff_model = sponsored.key(), sponsored.SPONSORED_MODEL
+        eff_key, eff_model = sponsored.key(), (sponsored_model or sponsored.SPONSORED_MODEL)
         eff_base, eff_budget = DEFAULT_BASE_URL, sponsored.PER_RUN_TOKEN_BUDGET
     else:
         eff_key, eff_model, eff_base, eff_budget = api_key, model, base_url, 0
