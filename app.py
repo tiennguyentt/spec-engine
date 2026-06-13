@@ -91,10 +91,12 @@ with st.sidebar:
     )
 
 
-# Models offered for the no-key live run (cheap + reliable first); free-text
-# entry lets you type any OpenRouter id — e.g. a DeepSeek V4.
-SPON_MODELS = ["deepseek/deepseek-chat", "google/gemini-2.0-flash-001",
-               "meta-llama/llama-3.3-70b-instruct", "qwen/qwen-2.5-72b-instruct"]
+# Models offered for the no-key live run (verified OpenRouter ids). V4 Flash is
+# the default — strong + fast/cheap enough for the capped run; V4 Pro is the
+# 1.6T heavyweight (slower, pricier). Free-text entry allows any other id.
+SPON_MODELS = ["deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
+               "deepseek/deepseek-chat", "google/gemini-2.0-flash-001",
+               "meta-llama/llama-3.3-70b-instruct"]
 
 # The main-column "watch it run live" button (see render_hero) sets this flag and
 # reruns; we read it here, after the sidebar, so the routing can start the run.
