@@ -226,10 +226,7 @@ def render_hero(run: dict) -> None:
     # ~5-min path and lives at the very bottom, it never gates the experience.
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
     st.markdown(
-        '<div class="se-flow-cap">This insurance spec looked approved. A real model caught the defects.</div>'
-        '<p class="se-hero-sub">It loads instantly because this run is recorded. Want to check it is real? '
-        "<b>Download the full run</b> up top and read every model call and token, or run your own live at the "
-        "bottom. Then watch it reason below and open any receipt.</p>",
+        '<div class="se-flow-cap">This insurance spec looked approved. A real model caught the defects.</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -245,32 +242,24 @@ def render_hero(run: dict) -> None:
         unsafe_allow_html=True,
     )
     # the intelligence, alive: a DERIVED map of the model's reasoning, animated
+    # (pure-CSS reveal, so it re-animates cheaply on every load = always-on motion)
     steps = _reasoning_steps(run)
     if steps:
         st.markdown(theme.reasoning_trace(steps, run["meta"].get("model", "")), unsafe_allow_html=True)
-    # SURFACE THE ACTUAL REASONING inline (it was buried in the Debate tab). This
-    # is how a viewer SEES it's real, not just told: the agents' own verbatim
-    # turns, each with its observation · evidence · risk · confidence. The map
-    # above is ours; this is the model's. Collapsed by default for mobile.
+    # SHOW, don't tell: the model's OWN verbatim reasoning streams once on first
+    # landing (a fast replay of the real run), so a cold viewer SEES it think
+    # instead of reading about it. Guarded so it streams once, not on every rerun;
+    # afterwards it lives in a collapsed drawer, reachable for a re-read on mobile.
     turns = s["debate"]["turns"]
     if turns:
-        st.markdown(
-            '<p class="se-hero-sub" style="margin-top:6px">The diagram above is our summary. The '
-            "<b>model's own</b> reasoning is right below. Watch it think in real time (a fast replay of "
-            "the real run), or read it word for word. No scripted demo reasons like this.</p>",
-            unsafe_allow_html=True,
-        )
-        if st.button(":material/play_arrow: Watch it reason in real time", key="watch_reason",
-                     use_container_width=True):
+        seen_key = f"_reasoned_{st.session_state.get('active_run_name', '')}"
+        if not st.session_state.get(seen_key):
             st.write_stream(_reason_gen(turns))
-        with st.expander(f"or read it verbatim, {len(turns)} agent turns + work-notes",
-                         expanded=False, icon=":material/notes:"):
+            st.session_state[seen_key] = True
+        with st.expander(f"the model's reasoning, verbatim · {len(turns)} agent turns + work-notes",
+                         expanded=False, icon=":material/forum:"):
             for _t in turns:
                 st.markdown(turn_html(_t, show_notes=True), unsafe_allow_html=True)
-    # the pipeline, demoted to "how it runs"
-    st.markdown('<div class="se-trace" style="margin:18px 0 -4px">how it runs</div>', unsafe_allow_html=True)
-    st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
-                unsafe_allow_html=True)
 
 
     # Catch titles are DATA-DRIVEN, derived from the run itself, so this view
@@ -418,6 +407,9 @@ def render_hero(run: dict) -> None:
     with st.expander("Inspect the full run, gate, D1-D5 grading, 11-role debate, evidence", icon=":material/frame_inspect:"):
         render_trace(run)
     with st.expander("How it works, architecture, budget, eval-log", icon=":material/settings:"):
+        st.markdown('<div class="se-trace" style="margin:0 0 -4px">the pipeline, end to end</div>', unsafe_allow_html=True)
+        st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
+                    unsafe_allow_html=True)
         render_how(run)
     with st.expander("Standards alignment, INCOSE characteristics & EARS patterns", icon=":material/architecture:"):
         st.markdown(
@@ -467,6 +459,18 @@ def render_hero(run: dict) -> None:
                          disabled=_left <= 0, use_container_width=True):
                 st.session_state["_trigger_sponsored"] = True
                 st.rerun()
+
+    # type/test, without leaving the verdict: a persistent input pinned to the
+    # bottom. Your word carries top authority. Submitting seeds the debate thread
+    # from this run, routes your point to the right agent, and opens the Debate
+    # workspace so you see the exchange (honest no-key handling lives downstream).
+    prompt = st.chat_input("Challenge a finding, or ask the team a question…")
+    if prompt:
+        if not st.session_state.get("chat_feed"):
+            st.session_state["chat_feed"] = _build_feed(run)
+        _handle_human_message(run, prompt)
+        st.session_state["workspace"] = "Debate"
+        st.rerun()
 
 
 
