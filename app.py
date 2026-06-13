@@ -228,10 +228,25 @@ def render_hero(run: dict) -> None:
         + "</div>",
         unsafe_allow_html=True,
     )
-    # the intelligence, alive: the model's real reasoning chain, animated
+    # the intelligence, alive: a DERIVED map of the model's reasoning, animated
     steps = _reasoning_steps(run)
     if steps:
         st.markdown(theme.reasoning_trace(steps, run["meta"].get("model", "")), unsafe_allow_html=True)
+    # SURFACE THE ACTUAL REASONING inline (it was buried in the Debate tab). This
+    # is how a viewer SEES it's real, not just told: the agents' own verbatim
+    # turns, each with its observation · evidence · risk · confidence. The map
+    # above is ours; this is the model's. Collapsed by default for mobile.
+    turns = s["debate"]["turns"]
+    if turns:
+        st.markdown(
+            f'<p class="se-hero-sub" style="margin-top:6px">↑ that map is <b>ours</b>. ↓ the '
+            f"<b>model's own</b> reasoning — {len(turns)} verbatim agent turns, each showing what it "
+            "inspected, the evidence it cited, and the risk it flagged. No canned demo reasons like this.</p>",
+            unsafe_allow_html=True,
+        )
+        with st.expander(f"▸ Read the model's actual reasoning — {len(turns)} agent turns (verbatim)", expanded=False):
+            for _t in turns:
+                st.markdown(turn_html(_t, show_notes=True), unsafe_allow_html=True)
     # the pipeline, demoted to "how it runs"
     st.markdown('<div class="se-trace" style="margin:18px 0 -4px">how it runs</div>', unsafe_allow_html=True)
     st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
