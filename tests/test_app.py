@@ -8,7 +8,7 @@ chat feed from the recorded sequence.
 import pytest
 from streamlit.testing.v1 import AppTest
 
-WORKSPACES = ["Chat", "Report", "Test", "Decide"]
+WORKSPACES = ["Overview", "Debate", "Verify", "Sign-off"]
 
 
 @pytest.fixture()
@@ -23,11 +23,13 @@ def _body(app: AppTest) -> str:
     return " ".join(getattr(md, "value", "") or "" for md in app.markdown)
 
 
-def test_default_view_is_the_chat_terminal(at):
+def test_default_view_is_the_overview(at):
     body = _body(at)
-    assert "se-casebrief" in body  # the case brief explains the feature before play
-    assert "digital insurance app" in body
+    # A cold viewer lands on the verdict + receipts, not a chat frame.
     assert at.radio[0].options == WORKSPACES
+    assert at.radio[0].value == "Overview"
+    assert "se-countup" in body  # the readiness delta animates in the hero
+    assert "spec readiness" in body
 
 
 def test_every_workspace_renders(at):
@@ -38,7 +40,7 @@ def test_every_workspace_renders(at):
 
 
 def test_report_shows_measured_surfaces(at):
-    at.radio[0].set_value("Report")
+    at.radio[0].set_value("Overview")
     at.run()
     body = _body(at)
     assert "Detection recall" in body
@@ -48,6 +50,8 @@ def test_report_shows_measured_surfaces(at):
 
 
 def test_transcript_populates_chat_feed(at):
+    at.radio[0].set_value("Debate")  # the debate workspace holds the transcript
+    at.run()
     buttons = {b.label: b for b in at.button}
     buttons["Show transcript"].click()
     at.run()

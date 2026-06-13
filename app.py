@@ -36,7 +36,7 @@ if st.session_state.get("view", "demo") == "intro":
 
 # ---------------------------------------------------------------- sidebar
 with st.sidebar:
-    if st.button("← What this system solves", use_container_width=True):
+    if st.button(":material/arrow_back: What this system solves", use_container_width=True):
         st.session_state["view"] = "intro"
         st.rerun()
 
@@ -60,7 +60,7 @@ with st.sidebar:
         st.download_button("draft-spec.json template",
                            (DATA_DIR / "andigi" / "draft-spec.json").read_text(encoding="utf-8"),
                            "draft-spec.json", use_container_width=True)
-        run_live = st.button("▶ Run the red team", type="primary", disabled=not api_key, use_container_width=True)
+        run_live = st.button(":material/play_arrow: Run the red team", type="primary", disabled=not api_key, use_container_width=True)
         st.caption("Hard budget 150k tokens, live burn shown. Cheap models work: every call is "
                    "schema-validated with retries. Uploaded files stay in this session only — "
                    "never stored server-side, never committed.")
@@ -129,22 +129,15 @@ def render_hero(run: dict) -> None:
     p0_1 = sum(1 for f in g1["findings"] if f["priority"] == "P0")
     p0_2 = sum(1 for f in g2["findings"] if f["priority"] == "P0")
 
-    theme.kicker("Knowledge Engine · evidence-backed spec red team · synthetic case: AnDigi insurance")
+    theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic)")
+    st.markdown(theme.flow_diagram(g1["overall_score"], g2["overall_score"], len(arbiter["amendments"])),
+                unsafe_allow_html=True)
     st.markdown(
-        f'<div class="se-hero-head">{len(arbiter["amendments"])} defects were hiding in this '
-        "approved-looking insurance spec.<br>The agent team caught them — with receipts.</div>",
+        '<div class="se-flow-cap">Messy evidence in. A verified, signed spec out.</div>'
+        f'<p class="se-hero-sub">{len(arbiter["amendments"])} defects caught with receipts — '
+        "before a human signs off.</p>",
         unsafe_allow_html=True,
     )
-    st.markdown(
-        '<p class="se-hero-sub">An AI team red-teams a draft spec against the evidence. '
-        "Case: <b style=\'color:#E7EAF0\'>AnDigi insurance — claims + AI triage</b>.</p>",
-        unsafe_allow_html=True,
-    )
-    pipe = " ".join(
-        f'<span class="se-id">{p}</span>' + ('<span style="color:#2A3140"> → </span>' if i < 4 else "")
-        for i, p in enumerate(["evidence", "gate", "11-agent debate", "corrected spec", "you sign off"])
-    )
-    st.markdown(f'<div style="font-family:JetBrains Mono,monospace;font-size:11.5px;margin:2px 0 10px;line-height:2">{pipe}</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="se-stats">'
         + stat(f'<span class="from">{g1["overall_score"]} →</span> '
@@ -174,7 +167,7 @@ def render_hero(run: dict) -> None:
         summary = (
             f'<div class="chead"><span class="cnum">{esc(c1["id"])}</span>'
             f'<span class="ctitle">CEO says auto-approve · policy 4.1 says human review</span>'
-            + ('<span class="se-chip" style="border-color:#F2A65A;color:#F2A65A">⚑ human decision</span>' if c1["needs_human_confirmation"] else "")
+            + (f'<span class="se-chip" style="border-color:#D6A03C;color:#D6A03C">{theme.micon("flag", size="13px")} human decision</span>' if c1["needs_human_confirmation"] else "")
             + "</div>"
         )
         st.markdown(f'<div class="se-catch">{summary}</div>', unsafe_allow_html=True)
@@ -190,7 +183,7 @@ def render_hero(run: dict) -> None:
         st.markdown(
             f'<div class="se-catch"><div class="chead"><span class="cnum">{esc(f1["id"])} · P0</span>'
             f'<span class="ctitle">“Circular 14/2026” does not exist — the spec invented a regulation</span>'
-            f'<span class="se-summon" style="margin:0">⚡ Compliance summoned</span></div></div>',
+            f'<span class="se-summon" style="margin:0">{theme.micon("bolt", size="14px")} Compliance summoned</span></div></div>',
             unsafe_allow_html=True,
         )
         with st.expander("view receipt — the corpus says the opposite"):
@@ -226,7 +219,7 @@ def render_hero(run: dict) -> None:
 
     # ---- gate strip ---------------------------------------------------------
     theme.section("the gate", "Code-enforced. Models cannot override these results.", f'{gate1["errors"]} errors → {gate2["errors"]}')
-    chips = " ".join(f'<span class="se-chip" style="border-color:{"#F85149" if h["severity"] == "error" else "#F2A65A"};color:{"#F85149" if h["severity"] == "error" else "#F2A65A"};margin-left:0">{esc(h["rule_id"])} {esc(h["requirement_id"])}</span>' for h in gate1["hits"])
+    chips = " ".join(f'<span class="se-chip" style="border-color:{"#C0685C" if h["severity"] == "error" else "#D6A03C"};color:{"#C0685C" if h["severity"] == "error" else "#D6A03C"};margin-left:0">{esc(h["rule_id"])} {esc(h["requirement_id"])}</span>' for h in gate1["hits"])
     st.markdown(f'<div class="se-gatescan" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;padding:4px 2px">{chips}</div>', unsafe_allow_html=True)
     with st.expander("inspect the deterministic gate log"):
         hits_html = "".join(
@@ -272,17 +265,11 @@ def render_hero(run: dict) -> None:
     if ev:
         theme.section("the eval", "Detection recall on the planted-defect benchmark",
                       f'{ev["caught"]}/{ev["total"]} caught · recall {ev["recall"]:.0%}')
-        st.markdown(
-            '<p class="se-body" style="max-width:760px;margin-top:-6px">This case ships with '
-            f'<b>{ev["total"]} deliberately planted defects</b> and a ground-truth file. '
-            "The same scorer runs on scripted and live runs — recall is measured, not claimed.</p>",
-            unsafe_allow_html=True,
-        )
         with st.expander("per-defect scorecard — what was caught, and through which channel"):
             rows = "".join(
                 f'<div class="se-gatehit"><span class="{"rid" if d["caught"] else "warn"}" '
-                f'style="color:{"#3FB950" if d["caught"] else "#F85149"}">'
-                f'{"✓" if d["caught"] else "✗ MISSED"}</span> · {esc(d["id"])} [{esc(d["channel"])}] '
+                f'style="color:{"#8E9A92" if d["caught"] else "#C0685C"}">'
+                f'{theme.micon("check", size="14px") if d["caught"] else theme.micon("close", size="14px") + " MISSED"}</span> · {esc(d["id"])} [{esc(d["channel"])}] '
                 f'{esc(d["title"])} → <i>{esc(d["where"])}</i></div>'
                 for d in ev["defects"]
             )
@@ -293,11 +280,11 @@ def render_hero(run: dict) -> None:
     # ---- depth ----------------------------------------------------------------
     st.write("")
     theme.section("depth", "For the technical reviewer", "")
-    with st.expander("🔍 Inspect the full run — gate, D1-D5 grading, 11-role debate, evidence"):
+    with st.expander("Inspect the full run — gate, D1-D5 grading, 11-role debate, evidence", icon=":material/frame_inspect:"):
         render_trace(run)
-    with st.expander("⚙ How it works — architecture, budget, eval-log"):
+    with st.expander("How it works — architecture, budget, eval-log", icon=":material/settings:"):
         render_how(run)
-    with st.expander("📐 Standards alignment — INCOSE characteristics & EARS patterns"):
+    with st.expander("Standards alignment — INCOSE characteristics & EARS patterns", icon=":material/architecture:"):
         st.markdown(
             '<p class="se-body">What the gate and rubric enforce, read in the vocabulary an '
             "enterprise reviewer audits against. The mapping is ours, at the characteristic "
@@ -389,7 +376,7 @@ def render_shipped_feature(run: dict) -> None:
                   f"{table.baseline_id} · rule table v{table.version}")
     st.markdown('<p class="se-trace">spec + your rulings compile into this behavior · no model at runtime · flip the ruling and watch it propagate</p>', unsafe_allow_html=True)
 
-    tm = st.toggle("⏳ Executable Time Machine — reverse the C1 ruling (published policy wins)",
+    tm = st.toggle(":material/history: Executable Time Machine — reverse the C1 ruling (published policy wins)",
                    value=st.session_state.get("tm_reverse_c1", False))
     if tm != st.session_state.get("tm_reverse_c1", False):
         st.session_state["tm_reverse_c1"] = tm
@@ -397,17 +384,17 @@ def render_shipped_feature(run: dict) -> None:
     if not table.auto_approval_enabled:
         st.markdown('<div class="se-flag" style="display:block">rule table v2 active — auto-approval DISABLED by the reversed ruling; every clean claim now takes the human path</div>', unsafe_allow_html=True)
 
-    with st.expander(f"⚖ decision table v{table.version} — the compiled IR this engine executes"):
+    with st.expander(f"decision table v{table.version} — the compiled IR this engine executes", icon=":material/balance:"):
         for e in sorted(table.entries, key=lambda x: x.order):
             conds = " AND ".join(f'{c["field"]} {c["op"]} {c["value"]}' for c in e.conditions) or "always"
             st.markdown(f'<div class="se-gatehit"><span class="rid">{esc(e.id)}</span> · IF {esc(conds)} → '
                         f'<b>{esc(e.verdict.upper())}</b> · <i>{esc(e.cites[:90])}</i></div>', unsafe_allow_html=True)
 
-    if st.button("▶ Run acceptance board (vectors derived independently from the baseline)"):
+    if st.button(":material/play_arrow: Run acceptance board (vectors derived independently from the baseline)"):
         results = compiler.run_acceptance(table)
         for r in results:
-            color = "#3FB950" if r["passed"] else "#F85149"
-            mark = "✓" if r["passed"] else "✗"
+            color = "#8E9A92" if r["passed"] else "#C0685C"
+            mark = theme.micon("check", size="15px") if r["passed"] else theme.micon("close", size="15px")
             st.markdown(f'<div class="se-gatehit"><span style="color:{color};font-weight:600">{mark} {esc(r["id"])}</span> '
                         f'· {esc(r["ac"])} · expected <b>{esc(r["expect"])}</b> got <b>{esc(r["got"])}</b></div>',
                         unsafe_allow_html=True)
@@ -440,8 +427,8 @@ def render_shipped_feature(run: dict) -> None:
         return
     claim = {"amount": amount, "policy": policy, "photo": photo, "precondition": precond, "description": desc}
     entry = compiler.evaluate(table, claim)
-    color = {"approve": "#3FB950", "reject": "#F85149", "block": "#F85149",
-             "investigate": "#F2A65A", "review": "#F2A65A"}[entry.verdict]
+    color = {"approve": "#8E9A92", "reject": "#C0685C", "block": "#C0685C",
+             "investigate": "#D6A03C", "review": "#D6A03C"}[entry.verdict]
     st.markdown(
         f'<div class="se-catch" style="border-left-color:{color}">'
         f'<div class="chead"><span class="cnum" style="color:{color}">{esc(entry.title)}</span></div>'
@@ -560,11 +547,11 @@ def _linkify(escaped_text: str) -> str:
 
 
 MACHINE_ROLES = {
-    "wiki": ("Evidence Wiki", "#7C8CFF"),
-    "conflicts": ("Conflict Check", "#F2A65A"),
-    "gate": ("Code Gate", "#F85149"),
-    "grader": ("Grader · D1–D5", "#F2A65A"),
-    "advisor": ("Advisor", "#3FB950"),
+    "wiki": ("Evidence Wiki", "#D6A03C"),
+    "conflicts": ("Conflict Check", "#D6A03C"),
+    "gate": ("Code Gate", "#C0685C"),
+    "grader": ("Grader · D1–D5", "#D6A03C"),
+    "advisor": ("Advisor", "#8E9A92"),
 }
 
 LEGEND = ("hover any underlined id to read what it is — W evidence claim · C conflict · "
@@ -661,7 +648,7 @@ def render_chat(run: dict) -> None:
         if not feed:
             st.markdown(CASE_BRIEF, unsafe_allow_html=True)
             b1, b2, _sp = st.columns([1.6, 1.4, 3])
-            play = b1.button("▶ Play the run", type="primary", use_container_width=True)
+            play = b1.button(":material/play_arrow: Play the run", type="primary", use_container_width=True)
             instant = b2.button("Show transcript", use_container_width=True)
             if play or instant:
                 st.session_state["chat_played"] = True
@@ -691,7 +678,7 @@ def _render_feed_item(item: dict) -> None:
                                   reply=item.get("reply", ""), work_notes=item.get("work_notes")),
                     unsafe_allow_html=True)
     elif kind == "human":
-        st.markdown(f'<div class="se-human"><div class="who" style="color:#A3B3FF;font-family:JetBrains Mono,monospace;'
+        st.markdown(f'<div class="se-human"><div class="who" style="color:#E6C079;font-family:JetBrains Mono,monospace;'
                     f'font-size:11px;text-transform:uppercase;letter-spacing:.08em">You · authority: highest</div>'
                     f'{esc(item["text"])}</div>', unsafe_allow_html=True)
 
@@ -872,16 +859,19 @@ def _handle_human_message(run: dict, prompt: str) -> None:
 
 
 # ---------------------------------------------------------------- run bar
-WORKSPACES = ["Chat", "Report", "Test", "Decide"]
+# Viewer-facing workspaces. Overview (the verdict + receipts) is first, so a
+# cold viewer lands on what the system *found* — not a chat frame. "Debate" is
+# the argument that produced the fixes, reachable on demand, never the front door.
+WORKSPACES = ["Overview", "Debate", "Verify", "Sign-off"]
 
 
 def render_run_bar(run: dict) -> str:
     meta = run["meta"]
     kind = meta.get("kind", "run")
-    kcolor = {"scripted-demo": "#F2A65A", "live": "#3FB950", "real-inference": "#3FB950"}.get(kind, "#9AA3B2")
+    kcolor = {"scripted-demo": "#D6A03C", "live": "#8E9A92", "real-inference": "#8E9A92"}.get(kind, "#9C9A92")
     score = run["stages"]["grade_round2"]["overall_score"]
-    c_back, c_bar = st.columns([0.6, 11], gap="small")
-    if c_back.button("←", help="Back to the start screen (case brief + play)",
+    c_back, c_bar, c_dl = st.columns([0.6, 9.6, 1.8], gap="small")
+    if c_back.button(":material/arrow_back:", help="Back to the start screen (case brief + play)",
                      use_container_width=True):
         # Reset the chat to its first screen so the run can be re-tested.
         # The intro page stays reachable from the sidebar.
@@ -889,12 +879,19 @@ def render_run_bar(run: dict) -> str:
         st.session_state.pop("chat_played", None)
         st.rerun()
     c_bar.markdown(
-        f'<div class="se-runbar" style="margin-top:0"><span class="idn"><b style="color:#E7EAF0">AnDigi</b> · '
+        f'<div class="se-runbar" style="margin-top:0"><span class="idn"><b style="color:#ECEAE3">AnDigi</b> · '
         f'feature: in-app claim → AI triage → instant payout</span>'
         f'<span class="kind" style="color:{kcolor};border-color:{kcolor}66">{esc(kind)}</span>'
         f'<span class="idn">11 agents · 5 phases · {score}/100</span>'
         f'<span class="idn" style="margin-left:auto">agents do the work · you sign off</span></div>',
         unsafe_allow_html=True,
+    )
+    c_dl.download_button(
+        ":material/download: replay", data=json.dumps(run, indent=2, ensure_ascii=False),
+        file_name=f"knowledge-engine-{kind}.json", mime="application/json",
+        use_container_width=True,
+        help="Download this run as a self-contained JSON bundle — replayable and "
+             "diffable anywhere, no engine install needed.",
     )
     ws = st.radio("workspace", WORKSPACES, horizontal=True, label_visibility="collapsed",
                   key="workspace")
@@ -937,7 +934,7 @@ def render_console(run: dict) -> None:
         with st.form("console"):
             rulings: list[dict] = []
             for i, d in enumerate(decisions):
-                st.markdown(f'<div class="se-flag" style="display:block">⚑ {esc(d)}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="se-flag" style="display:block">{theme.micon("flag", size="14px")} {esc(d)}</div>', unsafe_allow_html=True)
                 choice = st.radio("Your ruling", _decision_options(d), key=f"rule_{i}", label_visibility="collapsed")
                 rationale = st.text_input("One-line rationale (permanent record)", key=f"rat_{i}",
                                           placeholder="e.g. CEO confirmed in standup; Legal ticket L-42 opened")
@@ -974,12 +971,12 @@ def render_console(run: dict) -> None:
             theme.card(
                 f'<div class="rowtop"><span class="se-id">{esc(rule.id)}</span>'
                 f'<span class="se-topic">{esc(rule.title)}</span>'
-                f'<span class="se-chip" style="border-color:{"#F85149" if rule.severity == "blocking" else "#9AA3B2"}">{esc(rule.severity)}</span></div>'
+                f'<span class="se-chip" style="border-color:{"#C0685C" if rule.severity == "blocking" else "#9C9A92"}">{esc(rule.severity)}</span></div>'
                 f'<div class="se-body">{esc(rule.rule_text)}</div>'
                 f'<div class="se-trace">born from: {esc(rule.born_item)} · by you · {esc(rule.born_date)}</div>'
             )
             approvals.append(st.checkbox(f"Approve {rule.id}", value=True, key=f"appr_{rule.id}"))
-        if st.button("✍ Approve baseline & create handoff", type="primary"):
+        if st.button(":material/stylus_note: Approve baseline & create handoff", type="primary"):
             approved = [r for r, ok in zip(proposed, approvals) if ok]
             ledger.commit_rules(approved)
             signoff = {
@@ -1014,7 +1011,7 @@ def render_console(run: dict) -> None:
             st.session_state["signoff"] = signoff
             st.session_state["signoff_state"] = "signed"
             st.rerun()
-        if st.button("← Back to rulings"):
+        if st.button(":material/arrow_back: Back to rulings"):
             st.session_state["signoff_state"] = "pending"
             st.rerun()
 
@@ -1045,7 +1042,7 @@ def render_baseline(run: dict, signoff: dict) -> None:
 
     # ---- the compounding proof: rules fire on the NEXT draft -----------------
     theme.section("the loop", "Your judgment, applied to the next draft", "preflight · pure code")
-    if st.button("⚡ Preflight the next AnDigi draft (v1.1) with your rules"):
+    if st.button(":material/bolt: Preflight the next AnDigi draft (v1.1) with your rules"):
         v2 = DraftSpec.model_validate_json((DATA_DIR / "andigi-v2" / "draft-spec.json").read_text(encoding="utf-8"))
         hits = ledger.preflight(v2)
         if not hits:
@@ -1062,7 +1059,7 @@ def render_baseline(run: dict, signoff: dict) -> None:
                 unsafe_allow_html=True,
             )
 
-    with st.expander("⏳ Decision Time Machine — what if you ruled differently on C1?"):
+    with st.expander("Decision Time Machine — what if you ruled differently on C1?", icon=":material/history:"):
         branch = timemachine.alternative_branch(run, "C1")
         if branch:
             st.markdown(f'<p class="se-body"><b>What if:</b> {esc(branch["what_if"])}</p>', unsafe_allow_html=True)
@@ -1104,14 +1101,14 @@ def render_trace(run: dict) -> None:
             )
             st.markdown(f'<div class="se-card"><div style="display:flex;gap:14px;flex-wrap:wrap">{dims}</div></div>', unsafe_allow_html=True)
             checks = "".join(
-                f'<div class="se-gatehit"><span class="{ "rid" if c["result"] == "FAIL" else "" }" style="color:{"#F85149" if c["result"] == "FAIL" else "#3FB950"}">'
-                f'{ "✗" if c["result"] == "FAIL" else "✓"} {esc(c["dimension"])}</span> {esc(c["item"])}'
+                f'<div class="se-gatehit"><span class="{ "rid" if c["result"] == "FAIL" else "" }" style="color:{"#C0685C" if c["result"] == "FAIL" else "#8E9A92"}">'
+                f'{ theme.micon("close", size="14px") if c["result"] == "FAIL" else theme.micon("check", size="14px")} {esc(c["dimension"])}</span> {esc(c["item"])}'
                 + (f' — <i>{esc(c["note"])}</i>' if c["note"] else "") + "</div>"
                 for c in g["checklist"]
             )
             theme.card(checks)
             for f in g["findings"]:
-                color = {"P0": "#F85149", "P1": "#F2A65A", "P2": "#9AA4B2"}[f["priority"]]
+                color = {"P0": "#C0685C", "P1": "#D6A03C", "P2": "#9C9A92"}[f["priority"]]
                 theme.card(
                     f'<div class="rowtop"><span class="se-id">{esc(f["id"])}</span>'
                     f'<span class="se-chip" style="border-color:{color};color:{color}">{esc(f["priority"])} · {esc(f["dimension"])}</span>'
@@ -1175,7 +1172,7 @@ def render_trace(run: dict) -> None:
     with tabs[4]:
         if "advisor" in s:
             for item in s["advisor"]["items"]:
-                color = {"S0": "#F85149", "S1": "#F2A65A", "S2": "#9AA4B2"}[item["severity"]]
+                color = {"S0": "#C0685C", "S1": "#D6A03C", "S2": "#9C9A92"}[item["severity"]]
                 theme.card(
                     f'<div class="rowtop"><span class="se-chip" style="border-color:{color};color:{color}">{esc(item["severity"])}</span>'
                     f'<span class="se-topic">{esc(item["concern"])}</span></div>'
@@ -1327,8 +1324,8 @@ def render_live() -> None:
     st.session_state["chat_feed"] = feed
     st.session_state["active_run"] = run
     st.session_state["active_run_name"] = name
-    st.session_state["workspace"] = "Chat"
-    st.success(f"Run complete — saved as {name}.json. Opening the team chat…")
+    st.session_state["workspace"] = "Overview"
+    st.success(f"Run complete — saved as {name}.json. Showing the verdict + catches…")
     st.rerun()
 
 
@@ -1343,11 +1340,11 @@ elif chosen:
         st.session_state["active_run_name"] = str(chosen)
         st.session_state["chat_feed"] = []
     ws = render_run_bar(_run)
-    if ws == "Chat":
-        render_chat(_run)
-    elif ws == "Report":
+    if ws == "Overview":
         render_hero(_run)
-    elif ws == "Test":
+    elif ws == "Debate":
+        render_chat(_run)
+    elif ws == "Verify":
         render_shipped_feature(_run)
     else:
         render_console(_run)
