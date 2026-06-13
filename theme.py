@@ -370,6 +370,27 @@ h1, h2, h3 {
 .se-leadfix .lf-add { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--accent); line-height: 1.6; font-weight: 500; }
 .se-leadfix .lf-badge { margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); }
 
+/* ── live reasoning trace: the model's actual logic, replayed step by step ── */
+.se-reason {
+  border: 1px solid var(--line-strong); border-left: 2px solid var(--accent);
+  background: linear-gradient(180deg, var(--raised), var(--surface));
+  border-radius: 0 12px 12px 12px; padding: 16px 18px 14px; margin: 14px 0 16px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.se-rhead { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 13px; display: flex; align-items: center; gap: 8px; }
+.se-rhead .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: seBlink 1.4s steps(1) infinite; }
+.se-rstep { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; color: var(--muted); line-height: 1.55; padding: 5px 0; opacity: 0; animation: seReasonIn .45s cubic-bezier(.16,1,.3,1) both; }
+.se-rstep .rmark { color: var(--dim); flex: 0 0 auto; margin-top: 1px; }
+.se-rstep .rtxt b { color: var(--ink); font-weight: 600; }
+.se-rstep .rtxt .id { color: var(--accent); }
+.se-rstep.warn .rmark { color: var(--del); }
+.se-rstep.warn .rtxt { color: #D8B0AB; }
+.se-rstep.fix { color: var(--ink); }
+.se-rstep.fix .rmark { color: var(--accent); }
+@keyframes seReasonIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.se-rcursor { width: 9px; height: 15px; background: var(--accent); margin-top: 4px; opacity: 0; animation: seReasonIn .01s linear both, seBlink 1.1s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) { .se-rstep, .se-rcursor { animation: none; opacity: 1; } }
+
 /* ── try/audit callout: make verification one glance away ─────────── */
 .se-try {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -450,6 +471,28 @@ def bubble(role_key: str, role_label: str, stance: str, message: str, refs: list
 def bar(value: int, max_value: int = 5) -> str:
     pct = max(0, min(100, round(value / max_value * 100)))
     return f'<div class="se-bar"><div style="width:{pct}%"></div></div>'
+
+
+def reasoning_trace(steps: list[dict], model: str = "") -> str:
+    """Replay the run's actual logic as an animated, step-by-step trace —
+    evidence → grounding → contradiction → gate → debate → resolution → fix.
+    Each step's `t` is pre-built HTML; `k` selects the marker/styling."""
+    icon = {"scan": "search", "ground": "link", "conflict": "warning",
+            "gate": "gavel", "debate": "forum", "resolve": "balance", "fix": "check"}
+    rows = []
+    for i, stp in enumerate(steps):
+        k = stp["k"]
+        cls = "se-rstep" + (" warn" if k == "conflict" else "") + (" fix" if k == "fix" else "")
+        rows.append(
+            f'<div class="{cls}" style="animation-delay:{i * 0.5:.2f}s">'
+            f'<span class="rmark">{micon(icon.get(k, "chevron_right"), size="14px")}</span>'
+            f'<span class="rtxt">{stp["t"]}</span></div>'
+        )
+    cursor_delay = len(steps) * 0.5
+    head = (f'<div class="se-rhead"><span class="dot"></span>'
+            f'live reasoning · replayed from the {esc(model)} run</div>')
+    return (f'<div class="se-reason">{head}{"".join(rows)}'
+            f'<div class="se-rcursor" style="animation-delay:{cursor_delay:.2f}s,{cursor_delay:.2f}s"></div></div>')
 
 
 def telemetry(meta: dict) -> str:

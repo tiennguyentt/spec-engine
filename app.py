@@ -124,6 +124,53 @@ def find_claim(run: dict, cid: str) -> dict | None:
     return next((c for c in run["stages"]["wiki"]["claims"] if c["id"] == cid), None)
 
 
+def _clip(text: str, n: int = 110) -> str:
+    text = (text or "").strip()
+    return text if len(text) <= n else text[: n - 1].rstrip() + "…"
+
+
+def _reasoning_steps(run: dict) -> list[dict]:
+    """Build the run's real logic chain — every step derived from the run data,
+    so the hero shows how the model actually reasoned, not a staged script."""
+    s = run["stages"]
+    steps: list[dict] = []
+    files = run["meta"].get("evidence_files", [])
+    if files:
+        steps.append({"k": "scan", "t": f'scanning <b>{len(files)}</b> evidence sources — transcripts · policy · code · DB'})
+    confs = s["conflicts"]["conflicts"]
+    # lead with the sharpest contradiction: spec-vs-code, else one needing a human
+    conf = (next((c for c in confs if c["kind"] == "artifact-state-gap"), None)
+            or next((c for c in confs if c.get("needs_human_confirmation")), None)
+            or (confs[0] if confs else None))
+    if conf:
+        win = find_claim(run, conf["winning_claim_id"])
+        if win and win.get("sources"):
+            src = win["sources"][0]
+            loc = src.get("locator") or src.get("source_file", "")
+            steps.append({"k": "ground",
+                          "t": f'grounding <span class="id">{esc(conf["winning_claim_id"])}</span> ← '
+                               f'<b>{esc(loc)}</b>: “{esc(_clip(src.get("quote", ""), 64))}”'})
+        steps.append({"k": "conflict", "t": esc(_clip(conf["description"], 130))})
+    # the most diagnostic gate hit: a structural/grounding one if present
+    hits = s["gate"]["hits"]
+    gh = next((h for h in hits if h["rule_id"] in ("G7", "G8")), None) or (hits[0] if hits else None)
+    if gh:
+        steps.append({"k": "gate", "t": f'code gate — <b>{esc(gh["rule_id"])}</b> {esc(_clip(gh.get("message", ""), 80))}'})
+    # a real line of the model's debate reasoning
+    turns = s["debate"]["turns"]
+    dturn = (next((t for t in turns if t.get("message") and ("48" in t["message"] or "must" in t["message"].lower())), None)
+             or next((t for t in turns if t.get("message")), None))
+    if dturn:
+        steps.append({"k": "debate", "t": f'<b>{esc(team.role_label(dturn["role"]))}</b>: {esc(_clip(dturn["message"], 120))}'})
+    if conf:
+        steps.append({"k": "resolve",
+                      "t": f'resolved — <b>{esc(conf.get("winning_authority", ""))}</b> wins · {esc(_clip(conf["resolution"], 80))}'})
+    ams = s["debate"]["arbiter"]["amendments"]
+    if ams:
+        steps.append({"k": "fix", "t": f'corrected — “{esc(_clip(ams[0]["after"], 104))}”'})
+    return steps
+
+
 # ---------------------------------------------------------------- hero
 def render_hero(run: dict) -> None:
     s = run["stages"]
@@ -136,18 +183,11 @@ def render_hero(run: dict) -> None:
     theme.kicker("Evidence-backed spec red team · AnDigi insurance (synthetic case)")
     # (1) proof it's a real model run — exact tokens/model/duration, or an honest "scripted" label
     st.markdown(theme.telemetry(run["meta"]), unsafe_allow_html=True)
-    # (2) the problem made visceral in one glance: a flawed spec line, struck out and corrected
-    if arbiter["amendments"]:
-        am0 = arbiter["amendments"][0]
-        st.markdown(
-            '<div class="se-leadfix"><div class="lf-k">one defect — struck out, corrected, receipted</div>'
-            f'<div class="lf-del">{esc(am0["before"])}</div>'
-            '<div class="lf-arrow">↓ corrected</div>'
-            f'<div class="lf-add">{esc(am0["after"])}</div>'
-            f'<div class="lf-badge">caught by gate + debate · {esc(", ".join(am0["finding_ids"]))} · '
-            "every term traces to evidence ↓</div></div>",
-            unsafe_allow_html=True,
-        )
+    # (2) the intelligence, alive: replay the model's real reasoning chain —
+    # evidence → grounding → contradiction → gate → debate → resolution → fix
+    steps = _reasoning_steps(run)
+    if steps:
+        st.markdown(theme.reasoning_trace(steps, run["meta"].get("model", "")), unsafe_allow_html=True)
     st.markdown('<div class="se-flow-cap">Messy evidence in. A verified, signed spec out.</div>',
                 unsafe_allow_html=True)
     st.markdown(

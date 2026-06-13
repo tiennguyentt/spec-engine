@@ -32,6 +32,7 @@ def test_default_view_is_the_overview(at):
     assert "se-countup" in body  # the readiness delta animates in the hero
     assert "spec readiness" in body
     assert "real inference" in body  # telemetry strip proves the default is a real run
+    assert "live reasoning" in body  # the model's actual logic chain is replayed, not just wording
 
 
 def test_every_workspace_renders(at):
